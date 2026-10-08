@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   fetch:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v6
 
@@ -45,6 +45,7 @@ jobs:
           CODE=$(curl -s -o /tmp/resp.json -w '%{http_code}' -X POST "${URL%/}/wind" \
             --data-binary @dist/wind-account.json)
           echo "HTTP $CODE"
+          echo dist/wind-account.json
           cat /tmp/resp.json; echo
           [ "$CODE" = "200" ] || { echo "推送失败"; exit 1; }
 
