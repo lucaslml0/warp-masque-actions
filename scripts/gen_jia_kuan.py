@@ -283,6 +283,43 @@ proxy-groups:
       - {yaml_quote(front_group)}
       - DIRECT
 
+  - name: ♻️ 自动选择
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+    lazy: true
+    proxies:
+{q(landing_names)}
+
+  - name: 📹 油管视频
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+{q(landing_names)}
+
+  - name: 🎥 奈飞视频
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+{q(landing_names)}
+
+  - name: 📲 电报信息
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - 🎯 全球直连
+
+  - name: 🤖 AI服务
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+{q(landing_names)}
+
   - name: 🎯 全球直连
     type: select
     proxies:
@@ -290,6 +327,12 @@ proxy-groups:
       - 🚀 节点选择
 
   - name: 🛑 全球拦截
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+  - name: 🍃 应用净化
     type: select
     proxies:
       - REJECT
