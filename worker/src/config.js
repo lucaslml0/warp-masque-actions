@@ -4,7 +4,7 @@
 //
 // 端口 4443 和 8095 是后来补测出来的，4 个 v4 地址 x 这两个端口 8/8 全通。
 // 优选 IP/域名见 endpoints.js；可通过 POST /push/<token>/endpoints 远程提交。
-// 免费落地见 free_land.js；MASQUE 高级参数（sni/mtu/dns/network/cc）由 settings.advanced 传入。
+// 免费落地见 free_land.js。
 import { mergeEndpointPairs, entryName as epName } from "./endpoints.js";
 import { buildFreeProviders, buildFreeGroups, freeForService } from "./free_land.js";
 
@@ -47,47 +47,25 @@ function entryName(ip, port) {
   return `${ip.split(".").slice(2).join(".")}-${port}`;
 }
 
-/** @param {object} [adv] MASQUE 高级：sni, mtu, dns[], network, stack, cc, outerCc, bbrProfile, remoteDns, udp */
-function masqueNode(name, ip, port, priv, pub, v4, v6, sni, adv = {}) {
+function masqueNode(name, ip, port, priv, pub, v4, v6, sni) {
   const isV6 = ip.includes(":") && !ip.includes(".");
   const srv = (isV6 || /[a-zA-Z]/.test(ip)) ? `"${ip}"` : ip;
-  const finalSni = sni || adv.sni || null;
-  const extra = finalSni ? `\n    sni: ${finalSni}` : "";
-  const mtu = Number(adv.mtu) > 0 ? Number(adv.mtu) : 1280;
-  const dnsList = Array.isArray(adv.dns) && adv.dns.length
-    ? adv.dns
-    : ["1.1.1.1", "2606:4700:4700::1111"];
-  const remoteDns = adv.remoteDns !== false;
-  const udp = adv.udp !== false;
-  const network = adv.network && adv.network !== "quic" ? adv.network : null;
-  let stackBlock = "";
-  if (adv.stack && adv.stack !== "auto") {
-    stackBlock += `\n    ip-stack:\n      mode: ${adv.stack}`;
-    if (adv.cc) stackBlock += `\n      congestion-controller: ${adv.cc}`;
-  } else if (adv.cc) {
-    stackBlock += `\n    ip-stack:\n      mode: auto\n      congestion-controller: ${adv.cc}`;
-  }
-  let outerCc = "";
-  if (adv.outerCc) {
-    outerCc += `\n    congestion-controller: ${adv.outerCc}`;
-    if (adv.bbrProfile) outerCc += `\n    bbr-profile: ${adv.bbrProfile}`;
-  }
-  const netLine = network ? `\n    network: ${network}` : "";
+  const extra = sni ? `\n    sni: ${sni}` : "";
   return `  - name: ${name}
     type: masque
     server: ${srv}
-    port: ${port}${extra}${netLine}
+    port: ${port}${extra}
     private-key: ${priv}
     public-key: ${pub}
     ip: ${v4}
     ipv6: ${v6}
-    mtu: ${mtu}
-    udp: ${udp}
-    remote-dns-resolve: ${remoteDns}
-    dns: [${dnsList.join(", ")}]${stackBlock}${outerCc}`;
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]`;
 }
 
-function buildEntries(warp, custom, adv) {
+function buildEntries(warp, custom) {
   const { privateKey: priv, peerPublicKey: pub, ipv4: v4, ipv6: v6 } = warp;
   const entries = [], proxies = [];
   const v4Entries = [];
@@ -102,7 +80,7 @@ function buildEntries(warp, custom, adv) {
     const isV6 = ep.host.includes(":") && !ep.host.includes(".");
     if (!isV6) v4Entries.push(n);
     const sni = ep.sni || (ep.kind === "domain" ? ep.host : null);
-    proxies.push(masqueNode(n, ep.host, ep.port, priv, pub, v4, v6, sni, adv));
+    proxies.push(masqueNode(n, ep.host, ep.port, priv, pub, v4, v6, sni));
   }
   return { entries, proxies, v4Entries };
 }
@@ -166,8 +144,7 @@ function tailGroups(picks, free) {
 
 export function buildConfig(warp, opera, proton, wind, custom, opts = {}) {
   const free = opts.free || null;
-  const advanced = opts.advanced || {};
-  const { entries, proxies, v4Entries } = buildEntries(warp, custom, advanced);
+  const { entries, proxies, v4Entries } = buildEntries(warp, custom);
 
   const byLoc = {};
   for (const land of opera.landings) {
