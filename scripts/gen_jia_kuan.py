@@ -33,6 +33,14 @@ RULESETS = [
 ]
 
 
+def pem_to_b64der(pem):
+    """剥掉 PEM 头尾，只留 base64 DER，给 mihomo public-key 用。"""
+    return "".join(
+        ln.strip() for ln in pem.strip().splitlines()
+        if ln.strip() and not ln.startswith("-----")
+    )
+
+
 def entry_name(ip, port):
     if ":" in ip:
         seg, tail = ip.split(":")[2], ip.rsplit(":", 1)[-1]
@@ -163,7 +171,12 @@ def yaml_quote(s):
 
 
 def build(cfg, landings, certs):
-    priv, pub, v4, v6 = cfg["private_key"], cfg["public_key"], cfg["ipv4"], cfg["ipv6"]
+    # usque config.json: private_key / endpoint_pub_key / ipv4 / ipv6
+    priv = cfg["private_key"].strip()
+    if priv.startswith("-----"):
+        priv = pem_to_b64der(priv)
+    pub = pem_to_b64der(cfg["endpoint_pub_key"])
+    v4, v6 = cfg["ipv4"], cfg["ipv6"]
     entries, proxies = [], []
     for ip in V4 + V6:
         for port in PORTS:
