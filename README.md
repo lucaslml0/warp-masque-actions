@@ -296,12 +296,13 @@ Shadowrocket、Stash 等不认 `dialer-proxy` 的客户端用不了这条。
 Actions 那条要手动点一下才跑。如果想要它自己更新、随时有个 URL 能拿到最新配置，
 用 `worker/` 这份。
 
-一份聚合订阅，导进去有两类线路可切：
+一份聚合订阅，导进去有几类线路可切：
 
 - **亚洲 / 欧洲 / 美洲线路** — 走 MASQUE 再落 Opera，能换出口国家，多一跳会慢些
 - **WARP直连** — 只走 MASQUE，出口是 Cloudflare 自己的 IP，快但选不了国家
 - **Proton线路** — 配了 Proton 之后出现，下面按国家分组，可以直接选日本、新加坡等
 - **Windscribe线路** — 13 个地区，按地区分组。亚洲只有香港，但 Opera 那三个大区里没有
+- **家宽链式** — 管理页勾「开启家宽链式」后，订阅地址加 `?target=jk` 即为住宅宽带专属订阅（VPN Gate 落地）
 
 套娃线路超时或某个落地挂了，切 WARP直连 顶上。这两类共用同一批 MASQUE
 接入点，直连组本来就在配置里（做 dialer-proxy 的目标），顺手暴露出来而已。
@@ -358,6 +359,8 @@ Cloudflare 后台 → 左边 `存储和数据库` → `KV` → `创建实例`。
 
 ### 部署方式二：命令行
 
+本机：
+
 ```bash
 cd worker
 npm install
@@ -371,6 +374,17 @@ npx wrangler deploy
 
 部署完访问 `https://你的worker.workers.dev/` 设密码。
 订阅路径也在界面上改，不用动配置文件。
+
+**用 GitHub Actions 自动部署**（推荐改完代码直接推）：
+
+1. 先在本机建好 KV，记下 id：`npx wrangler kv namespace create KV`
+2. 仓库 Settings → Secrets and variables → Actions 加：
+   - `CLOUDFLARE_API_TOKEN` — Cloudflare API Token（Workers 编辑 + Account 读）
+   - `CLOUDFLARE_ACCOUNT_ID` — 账号 ID
+   - `CLOUDFLARE_KV_ID` — 上一步的 KV id
+   - （可选）`CLOUDFLARE_WORKER_NAME` — Worker 名，默认 `opera-masque`
+3. Actions 里选 **「部署 Worker（命令行）」**，点 Run workflow；  
+   或推送 `worker/**` 到 `main` 会自动部署。
 
 ### 改了代码想重新打包
 
@@ -398,10 +412,12 @@ npm run build
 |---|---|
 | `/` | 首次是设密码页，之后是登录/管理页 |
 | `/login` `/logout` | 登录、退出 |
-| 你设的订阅路径 | 默认 `/sub`，要 `?token=` |
+| 你设的订阅路径 | 默认 `/sub`，要 `?token=`；加 `?target=jk` 为家宽专属订阅 |
 | `/api/setup` | POST，首次设密码 |
 | `/api/password` | POST，改密码 |
 | `/api/sub-path` | POST，改订阅路径 |
+| `/api/jia-kuan` | POST，开启/关闭家宽链式 |
+| `/api/jia-kuan/refresh` | POST，强制刷新家宽节点 |
 | `/api/refresh` | POST，重新拿 Opera 凭据 |
 | `/api/reset-warp` | POST，重注册 WARP 设备 |
 
