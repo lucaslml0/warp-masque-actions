@@ -22,7 +22,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "worker/**"
+      #- "worker/**"
       - ".github/workflows/deploy-worker.yml"
 
 permissions:
