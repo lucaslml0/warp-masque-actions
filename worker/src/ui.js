@@ -199,7 +199,6 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
   const warp = s.warp || {};
   const stat = s.stats || {};
   const free = opts.free || { enabled: false, useWarp: true, scope: "ai-streaming", protocolMode: "stable", countries: ["US","JP","SG"] };
-  const advanced = opts.advanced || { sni: "", mtu: 1280, dns: ["1.1.1.1","8.8.8.8"], network: "quic", stack: "auto", cc: "", outerCc: "", bbrProfile: "", remoteDns: true, udp: true };
   const freeCountryList = opts.freeCountries || [
     { code: "US", flag: "🇺🇸", name: "美国" },
     { code: "JP", flag: "🇯🇵", name: "日本" },
@@ -350,8 +349,7 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       <div class="note">
         MASQUE 当前置，落地换成 <a href="https://www.vpngate.net/cn/" target="_blank" rel="noopener" style="color:var(--cyan)">VPN Gate</a>
         志愿者共享的家庭宽带，出网是住宅 IP（日本、韩国居多）。<br>
-        开启后订阅地址加 <code>?target=jk</code> 即为家宽专属订阅。<br>
-        节点掉线正常，客户端用「🏠 家宽自动」会自己往下换。需要 mihomo（openvpn + dialer-proxy）。
+        开启后订阅地址加 <code>?target=jk</code> 即为家宽专属订阅。
       </div>
     </div>
 
@@ -363,8 +361,8 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       ${ep.meta && ep.meta.mode ? row("合并模式", ep.meta.mode, "") : ""}
       <div class="note">
         内置含 WARP MASQUE IP 段 + <code>masque*.bestcf.eu.cc</code> 域名。<br>
-        本地优选后可 <b>POST</b> 到推送地址末尾加 <code>/endpoints</code> 远程提交。<br>
-        ${(ep.endpoints && ep.endpoints.length) ? '<a href="#" onclick="go(\'/api/endpoints/clear\');return false" style="color:var(--red)">清空自定义，恢复内置</a>' : ""}
+        本地优选后可 POST 到推送地址末尾加 <code>/endpoints</code> 远程提交。
+        ${(ep.endpoints && ep.endpoints.length) ? '<br><a href="#" onclick="go(\'/api/endpoints/clear\');return false" style="color:var(--red)">清空自定义，恢复内置</a>' : ""}
       </div>
     </div>
 
@@ -399,38 +397,6 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       <div class="sub" style="margin-top:10px">
         <button onclick="saveFree(${free.enabled ? "false" : "true"})">${free.enabled ? "关闭免费落地" : "开启免费落地"}</button>
         ${free.enabled ? `<button class="gh" onclick="saveFree(true)">保存地区/范围</button>` : ""}
-      </div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-t">MASQUE 高级设置</div>
-      ${row("SNI", advanced.sni || "（自动）", "")}
-      ${row("MTU", String(advanced.mtu || 1280), "")}
-      ${row("网络", advanced.network || "quic", "")}
-      ${row("IP 栈", advanced.stack || "auto", "")}
-      ${row("拥塞控制", advanced.cc || advanced.outerCc || "（默认）", "")}
-      <div class="note">一般不用改。保存后会重建订阅配置。</div>
-      <div class="pw" style="margin-top:8px">
-        <input id="advSni" placeholder="SNI 留空=自动" value="${advanced.sni || ""}">
-        <input id="advMtu" placeholder="MTU" value="${advanced.mtu || 1280}">
-        <select id="advNet" style="background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
-          <option value="quic" ${advanced.network!=="h2"?"selected":""}>QUIC/H3</option>
-          <option value="h2" ${advanced.network==="h2"?"selected":""}>H2/TCP</option>
-        </select>
-        <button onclick="saveAdv()">保存</button>
-      </div>
-      <div class="sub" style="margin-top:8px">
-        <select id="advStack" style="flex:1;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
-          <option value="auto" ${!advanced.stack||advanced.stack==="auto"?"selected":""}>stack: auto</option>
-          <option value="gvisor" ${advanced.stack==="gvisor"?"selected":""}>gvisor</option>
-          <option value="mips" ${advanced.stack==="mips"?"selected":""}>mips</option>
-        </select>
-        <select id="advCc" style="flex:1;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
-          <option value="" ${!advanced.cc?"selected":""}>拥塞：默认</option>
-          <option value="bbr" ${advanced.cc==="bbr"?"selected":""}>bbr</option>
-          <option value="cubic" ${advanced.cc==="cubic"?"selected":""}>cubic</option>
-          <option value="reno" ${advanced.cc==="reno"?"selected":""}>reno</option>
-        </select>
       </div>
     </div>
 
@@ -535,15 +501,6 @@ function saveFree(on){
   const useWarp=!!(document.getElementById('freeUseWarp')||{}).checked;
   post('/api/free-land',{enabled:!!on,countries,scope,useWarp,protocolMode:'stable'},
        on?'免费落地已开启':'免费落地已关闭');
-}
-function saveAdv(){
-  post('/api/advanced',{
-    sni:(document.getElementById('advSni')||{}).value||'',
-    mtu:Number((document.getElementById('advMtu')||{}).value)||1280,
-    network:(document.getElementById('advNet')||{}).value||'quic',
-    stack:(document.getElementById('advStack')||{}).value||'auto',
-    cc:(document.getElementById('advCc')||{}).value||''
-  },'高级设置已保存');
 }
 function jkToggle(on){
   post('/api/jia-kuan',{enabled:!!on}, on ? '家宽链式已开启' : '家宽链式已关闭');
