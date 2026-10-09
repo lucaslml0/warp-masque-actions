@@ -1,0 +1,8 @@
+# 本地优选后的接入点，一行一个。可带端口。
+# 复制为 custom-endpoints.txt 后，Actions/脚本可选用。
+# 更推荐：用 scripts/push_endpoints.py 直接 POST 到 Worker。
+
+162.159.198.1:443
+162.159.198.2:500
+masque.bestcf.eu.cc:443
+masque1.bestcf.eu.cc:443
