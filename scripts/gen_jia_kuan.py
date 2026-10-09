@@ -11,6 +11,12 @@ V6 = ["2606:4700:103::1", "2606:4700:103::2", "2606:4700:104::1", "2606:4700:104
 PORTS = (443, 500, 1701, 4500, 4443, 8443, 8095)
 OFFICIAL_SNI = "zt-masque.cloudflareclient.com"
 SNI_NODE = ("162.159.198.1", 443)
+# usque-custom-pro 同源优选域名
+BESTCF_DOMAINS = [
+    ("masque.bestcf.eu.cc", 443),
+    ("masque1.bestcf.eu.cc", 443),
+    ("masque2.bestcf.eu.cc", 500),
+]
 VPNGATE_URLS = (
     "https://www.vpngate.net/api/iphone/",
     "http://www.vpngate.net/api/iphone/",
@@ -49,7 +55,8 @@ def entry_name(ip, port):
 
 
 def masque_node(name, ip, port, priv, pub, v4, v6, sni=None):
-    srv = f'"{ip}"' if ":" in ip else ip
+    is_v6 = ":" in ip and "." not in ip
+    srv = f'"{ip}"' if is_v6 or any(c.isalpha() for c in ip) else ip
     extra = f"\n    sni: {sni}" if sni else ""
     return (
         f"  - name: {name}\n    type: masque\n    server: {srv}\n    port: {port}{extra}\n"
@@ -171,7 +178,6 @@ def yaml_quote(s):
 
 
 def build(cfg, landings, certs):
-    # usque config.json: private_key / endpoint_pub_key / ipv4 / ipv6
     priv = cfg["private_key"].strip()
     if priv.startswith("-----"):
         priv = pem_to_b64der(priv)
@@ -185,6 +191,10 @@ def build(cfg, landings, certs):
             proxies.append(masque_node(n, ip, port, priv, pub, v4, v6))
     entries.append("官方域名")
     proxies.append(masque_node("官方域名", SNI_NODE[0], SNI_NODE[1], priv, pub, v4, v6, OFFICIAL_SNI))
+    for host, port in BESTCF_DOMAINS:
+        n = f"bestcf-{host.split('.')[0]}-{port}"
+        entries.append(n)
+        proxies.append(masque_node(n, host, port, priv, pub, v4, v6, host))
     front_group = "⚡ MASQUE前置"
     country_count, landing_names = {}, []
     for i, node in enumerate(landings):
