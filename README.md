@@ -455,6 +455,25 @@ SurfEasy 的 API 不返回真实过期时间，所以按这个走，另外留了
 **客户端不认 dialer-proxy** — Shadowrocket、Stash 这类只支持 masque
 不支持链式出站，导进去只有 WARP直连 那组能用，套娃线路会报错。
 
+### 优选 IP / 域名（远程提交）
+
+内置接入点含 WARP MASQUE IP 段，以及 `masque*.bestcf.eu.cc` 域名（与 [usque-custom-pro](https://github.com/lucaslml0/usque-custom-pro) 同源）。
+
+本地优选后可远程写入 Worker，不必改代码：
+
+```bash
+# 管理页「Proton 落地」生成推送地址，例如 https://xxx.workers.dev/push/<token>
+python3 scripts/push_endpoints.py \
+  "https://xxx.workers.dev/push/<token>" \
+  result.csv \
+  --mode prefer
+```
+
+- `POST /push/<token>/endpoints`
+- Body：`{"endpoints":["162.159.198.1:443","masque.bestcf.eu.cc:443"],"mode":"prefer","replace":true}`
+- `mode`：`merge`（内置+自定义）/ `prefer`（自定义优先）/ `only`（仅自定义）
+- 管理页「优选接入点」可查看条数与清空
+
 ### Proton 落地（可选）
 
 Opera 只有三个大区，想要更多国家可以再挂一层 Proton。免费版 10 个国家：
@@ -497,81 +516,5 @@ Proton 的证书最长 7 天，`Duration` 写再长也封顶（实测 43200 min�
 Windscribe 的浏览器扩展用的是标准 HTTPS 代理，和 Opera 同一个形态，
 所以能直接写成静态节点挂在 MASQUE 后面。
 
-注册不需要邮箱，`POST /Users` 给个随机用户名密码就返回 session。
-免费额度**每月 2GB**（官网说的 10GB 要验证邮箱，匿名号拿不到）。
-
-**为什么开户要走流水线**
-
-它的认证只有一行 `md5(固定secret + 时间戳)`，本来在 Worker 里就能跑完。
-但**开户和出口 IP 强相关**：一个 IP 开过号之后再开，拿到的是
-`status=2` 的降额账号（`traffic_max` 只有 1MB），而这种账号连
-`/ServerCredentials` 都取不到：
-
-```
-400  errorCode 1700
-     "User unable to generate credentials. status = 2"
-```
-
-也就是说降额号完全不可用，不是"额度小一点"的问题。
-
-Cloudflare Worker 的出口 IP 是整个平台共享的，早被别人拿去开过号，
-所以 Worker 里开不出能用的账号。开户放到 GitHub Actions 上做，
-runner 的 IP 干净。
-
-13 个地区，62 台落地：
-
-```
-美国东部/中部/西部  加拿大东部/西部  英国  法国  德国  荷兰
-挪威  瑞士  罗马尼亚  香港
-```
-
-落地是机房 IP，M247 为主。
-
-**配置步骤**
-
-和 Proton 共用同一个推送地址，不用再加 secret：
-
-1. 管理页「Proton 落地」那里生成推送地址，配进 `WORKER_PUSH_URL`
-2. 跑一次 `取 Windscribe 账号` 流水线
-
-流水线会自己在地址末尾加 `/wind`。它开完号会先验一次能不能取到代理凭据，
-拿到降额号就直接失败退出，不会把不能用的号推给 Worker。
-
-**流量用完了怎么办**
-
-管理页「Windscribe 落地」区块能看到本月用了多少。用完重跑一次流水线换个号。
-
-偶尔会碰上 runner 的 IP 被别人用过，这时流水线会报
-`拿到的是降额账号 status=2`，重跑一次换台机器就行。
-
-流水线也配了每月 1 号自动跑一次，对上 Windscribe 的月度重置。
-
-### 跑测试
-
-```bash
-cd worker && npm test
-```
-
-99 项，覆盖常数时间比较、token 伪造/篡改/过期、登录限速、并发初始化，
-Proton 凭据推送（令牌校验、坏数据、过期拒绝、换令牌失效），
-配置结构（分组完整性、无悬空引用、直连组成员正确），
-以及路由层的鉴权（未登录一律 404、订阅 token 校验、按需重建、cookie 安全属性）。
-
-### 两个坑
-
-**WebCrypto 导不出 mihomo 要的私钥格式。** WebCrypto 只能导 PKCS8，
-mihomo 要 SEC1，直接喂会报 `use ParsePKCS8PrivateKey instead`。
-而且光把 PKCS8 里那段抠出来还不够——WebCrypto 省略了曲线参数，
-会接着报 `unknown elliptic curve`。`warp.js` 里的 `pkcs8ToSec1`
-重新编了一份带 P-256 OID 的完整 SEC1。
-
-**Opera 的 API 用 Digest 认证，而 Digest 要 MD5。** WebCrypto 没有 MD5，
-所以 `md5.js` 是手写的。另外 Workers 的 fetch 不自动管 cookie，
-SurfEasy 的会话得手工存 `Set-Cookie`。
-
-### 跟 Actions 版的区别
-
-Worker 版少一道 `mihomo -t` 校验——Actions 里会真的下载 mihomo 加载一遍，
-确保推出去的配置能用，Worker 里做不到。
-
-换来的是自动更新和一个随时可用的 URL。
+注册不需要邮箱，免费额度每月约 2GB。流水线在 GitHub runner 上开户后推送到 Worker。
+配置方式与 Proton 类似：管理页生成推送地址，Actions 写入 `WORKER_PUSH_URL` 后跑 Windscribe 流水线。
