@@ -246,7 +246,7 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
   color:var(--pink);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
   margin-bottom:12px;text-shadow:0 0 6px var(--pink);
 }
-.sec-t::before{content:"▍";color:var(--cyan);margin-right:6px}
+.sec-t::before{content:"0";color:var(--cyan);margin-right:6px}
 .row{
   display:flex;justify-content:space-between;align-items:baseline;gap:16px;
   padding:7px 0;border-bottom:1px dashed rgba(0,240,255,.14);font-size:13px;
@@ -409,6 +409,7 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
         <div class="cell"><div class="n">${stat.entries ?? "—"}</div><div class="l">WARP 直连</div></div>
         <div class="cell"><div class="n">${stat.proton || "—"}</div><div class="l">Proton 落地</div></div>
         <div class="cell"><div class="n">${stat.wind || "—"}</div><div class="l">Windscribe 落地</div></div>
+        <div class="cell"><div class="n">${jkEnabled && jkMeta ? (jkMeta.landings ?? 0) : "—"}</div><div class="l">家宽落地</div></div>
       </div>
     </div>
 
