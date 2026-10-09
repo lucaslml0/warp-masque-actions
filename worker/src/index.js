@@ -10,6 +10,7 @@
 import { registerWarp } from "./warp.js";
 import { fetchOpera } from "./opera.js";
 import { buildConfig } from "./config.js";
+import { buildJiaKuanConfig } from "./jia_kuan.js";
 import { parseBlob } from "./proton.js";
 import { fetchWindscribe, fetchSession } from "./windscribe.js";
 import { renderUI, renderLogin, renderSetup, renderNoKV } from "./ui.js";
@@ -20,6 +21,8 @@ import {
 
 const K_WARP = "warp:device";     // WARP 注册信息，长期复用
 const K_CFG = "config:yaml";      // 聚合配置（套娃线路 + WARP 直连）
+const K_JK = "config:jia-kuan";   // 家宽链式订阅缓存
+const K_JK_META = "state:jia-kuan"; // 家宽缓存元数据
 const K_STATE = "state:meta";     // 状态元数据，给 UI 用
 const K_CRED = "auth:cred";       // 密码哈希 + 盐
 const K_SET = "settings";         // 订阅路径等设置
@@ -36,6 +39,8 @@ const DEFAULT_SUB = "sub";
 // 留 10 分钟余量，别卡着点过期。
 const TTL_MS = 4 * 3600 * 1000;
 const SKEW_MS = 10 * 60 * 1000;
+// 家宽节点清单缓存 30 分钟（与 jia_kuan.js 内存缓存对齐）
+const JK_TTL_MS = 30 * 60 * 1000;
 
 const json = (o, s = 200) =>
   new Response(JSON.stringify(o), {
@@ -56,7 +61,38 @@ const notFound = () => new Response("Not Found", { status: 404 });
 
 async function getSettings(env) {
   const s = (await env.KV.get(K_SET, "json")) || {};
-  return { subPath: s.subPath || DEFAULT_SUB };
+  return {
+    subPath: s.subPath || DEFAULT_SUB,
+    // 家宽链式：默认关闭，管理页勾上后订阅地址加 ?target=jk 即专属订阅
+    jkEnabled: !!s.jkEnabled,
+  };
+}
+
+/** 生成 / 刷新家宽订阅。未开启时返回 null。 */
+async function ensureJiaKuan(env, { force = false } = {}) {
+  const settings = await getSettings(env);
+  if (!settings.jkEnabled) return null;
+
+  if (!force) {
+    const meta = await env.KV.get(K_JK_META, "json");
+    const cached = await env.KV.get(K_JK);
+    if (cached && meta && meta.expiresAt && Date.parse(meta.expiresAt) > Date.now()) {
+      return cached;
+    }
+  }
+
+  const warp = await getWarp(env);
+  const { yaml, landings, entries } = await buildJiaKuanConfig(warp);
+  const now = Date.now();
+  const meta = {
+    updatedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + JK_TTL_MS).toISOString(),
+    landings,
+    entries,
+  };
+  await env.KV.put(K_JK, yaml);
+  await env.KV.put(K_JK_META, JSON.stringify(meta));
+  return yaml;
 }
 
 /** 拿 WARP 设备信息，KV 里有就复用，没有才注册。 */
@@ -214,9 +250,41 @@ export default {
     const subPath = "/" + settings.subPath;
 
     // ---- 订阅。客户端带不了 cookie，用 ?token= ----
+    // target=jk / target=vg → 家宽专属订阅（需管理页开启）
     if (path === subPath) {
       const t = url.searchParams.get("token") || "";
       if (!(await verifyToken(cred, t)) && !authed) return notFound();
+
+      const target = (url.searchParams.get("target") || "").toLowerCase();
+      if (target === "jk" || target === "vg") {
+        if (!settings.jkEnabled) {
+          return new Response(
+            "家宽链式没开。到管理页勾上「开启家宽链式」再访问。",
+            { status: 403, headers: { "content-type": "text/plain; charset=utf-8" } },
+          );
+        }
+        try {
+          const yaml = await ensureJiaKuan(env);
+          if (!yaml) {
+            return new Response("家宽配置生成失败，稍后重试",
+              { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } });
+          }
+          return new Response(yaml, {
+            headers: {
+              "content-type": "text/yaml; charset=utf-8",
+              "content-disposition": "attachment; filename=jia-kuan-masque.yaml",
+              "profile-update-interval": "1",
+              "cache-control": "no-store",
+            },
+          });
+        } catch (e) {
+          const reason = e && e.message ? e.message : String(e);
+          return new Response(
+            `家宽节点暂时拉不到：${reason}\n过几分钟再更新，客户端会先用着上一份。`,
+            { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } },
+          );
+        }
+      }
 
       const yaml = await ensureConfig(env);
       if (!yaml) {
@@ -334,8 +402,10 @@ export default {
       if (wa && wa.sessionAuthHash) {
         try { windUsage = await fetchSession(wa); } catch { windUsage = null; }
       }
+      const jkMeta = await env.KV.get(K_JK_META, "json");
       return html(renderUI(state, url.host, subPath, token, cred,
-                           pushToken, protonCred, windUsage));
+                           pushToken, protonCred, windUsage,
+                           { jkEnabled: settings.jkEnabled, jkMeta }));
     }
 
     // ---- 以下都要登录。未登录一律 404，不用 401 ----
@@ -375,6 +445,50 @@ export default {
       }
       await env.KV.put(K_SET, JSON.stringify({ ...settings, subPath: p }));
       return json({ ok: true, msg: `订阅路径已改为 /${p}` });
+    }
+
+    // 开启 / 关闭家宽链式
+    if (path === "/api/jia-kuan" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const on = !!body.enabled;
+      await env.KV.put(K_SET, JSON.stringify({ ...settings, jkEnabled: on }));
+      if (!on) {
+        await env.KV.delete(K_JK);
+        await env.KV.delete(K_JK_META);
+        return json({ ok: true, msg: "家宽链式已关闭" });
+      }
+      try {
+        await ensureJiaKuan(env, { force: true });
+        const meta = await env.KV.get(K_JK_META, "json");
+        return json({
+          ok: true,
+          msg: `家宽链式已开启，${meta?.landings || 0} 条落地`,
+          meta,
+        });
+      } catch (e) {
+        return json({
+          ok: true,
+          msg: "已开启，但节点暂时拉不到：" + (e.message || e) + "。订阅时会重试。",
+        });
+      }
+    }
+
+    // 强制刷新家宽节点
+    if (path === "/api/jia-kuan/refresh" && req.method === "POST") {
+      if (!settings.jkEnabled) {
+        return json({ ok: false, error: "家宽链式没开" }, 400);
+      }
+      try {
+        await ensureJiaKuan(env, { force: true });
+        const meta = await env.KV.get(K_JK_META, "json");
+        return json({
+          ok: true,
+          msg: `已刷新，${meta?.landings || 0} 条落地`,
+          meta,
+        });
+      } catch (e) {
+        return json({ ok: false, error: e.message || String(e) }, 503);
+      }
     }
 
     // 改密码。旧 token 会因为哈希变化自动失效，所以要重新下发
