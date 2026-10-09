@@ -1,0 +1,1918 @@
+# 家宽链式 over Cloudflare WARP (MASQUE)
+# 链路: 本机 -> MASQUE -> VPN Gate 住宅 OpenVPN -> 目标
+# 前置 57 个 MASQUE；家宽落地 40 个
+# 需要 mihomo（openvpn + dialer-proxy）
+
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: true
+unified-delay: true
+tcp-concurrent: true
+external-controller: 127.0.0.1:9090
+
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://1.1.1.1/dns-query
+
+proxies:
+  - name: 198.1-443
+    type: masque
+    server: 162.159.198.1
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-500
+    type: masque
+    server: 162.159.198.1
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-1701
+    type: masque
+    server: 162.159.198.1
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-4500
+    type: masque
+    server: 162.159.198.1
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-4443
+    type: masque
+    server: 162.159.198.1
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-8443
+    type: masque
+    server: 162.159.198.1
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.1-8095
+    type: masque
+    server: 162.159.198.1
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-443
+    type: masque
+    server: 162.159.198.2
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-500
+    type: masque
+    server: 162.159.198.2
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-1701
+    type: masque
+    server: 162.159.198.2
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-4500
+    type: masque
+    server: 162.159.198.2
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-4443
+    type: masque
+    server: 162.159.198.2
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-8443
+    type: masque
+    server: 162.159.198.2
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 198.2-8095
+    type: masque
+    server: 162.159.198.2
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-443
+    type: masque
+    server: 162.159.199.1
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-500
+    type: masque
+    server: 162.159.199.1
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-1701
+    type: masque
+    server: 162.159.199.1
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-4500
+    type: masque
+    server: 162.159.199.1
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-4443
+    type: masque
+    server: 162.159.199.1
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-8443
+    type: masque
+    server: 162.159.199.1
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.1-8095
+    type: masque
+    server: 162.159.199.1
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-443
+    type: masque
+    server: 162.159.199.2
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-500
+    type: masque
+    server: 162.159.199.2
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-1701
+    type: masque
+    server: 162.159.199.2
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-4500
+    type: masque
+    server: 162.159.199.2
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-4443
+    type: masque
+    server: 162.159.199.2
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-8443
+    type: masque
+    server: 162.159.199.2
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 199.2-8095
+    type: masque
+    server: 162.159.199.2
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-443
+    type: masque
+    server: "2606:4700:103::1"
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-500
+    type: masque
+    server: "2606:4700:103::1"
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-1701
+    type: masque
+    server: "2606:4700:103::1"
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-4500
+    type: masque
+    server: "2606:4700:103::1"
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-4443
+    type: masque
+    server: "2606:4700:103::1"
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-8443
+    type: masque
+    server: "2606:4700:103::1"
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-1-8095
+    type: masque
+    server: "2606:4700:103::1"
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-443
+    type: masque
+    server: "2606:4700:103::2"
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-500
+    type: masque
+    server: "2606:4700:103::2"
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-1701
+    type: masque
+    server: "2606:4700:103::2"
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-4500
+    type: masque
+    server: "2606:4700:103::2"
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-4443
+    type: masque
+    server: "2606:4700:103::2"
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-8443
+    type: masque
+    server: "2606:4700:103::2"
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-103-2-8095
+    type: masque
+    server: "2606:4700:103::2"
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-443
+    type: masque
+    server: "2606:4700:104::1"
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-500
+    type: masque
+    server: "2606:4700:104::1"
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-1701
+    type: masque
+    server: "2606:4700:104::1"
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-4500
+    type: masque
+    server: "2606:4700:104::1"
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-4443
+    type: masque
+    server: "2606:4700:104::1"
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-8443
+    type: masque
+    server: "2606:4700:104::1"
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-1-8095
+    type: masque
+    server: "2606:4700:104::1"
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-443
+    type: masque
+    server: "2606:4700:104::2"
+    port: 443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-500
+    type: masque
+    server: "2606:4700:104::2"
+    port: 500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-1701
+    type: masque
+    server: "2606:4700:104::2"
+    port: 1701
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-4500
+    type: masque
+    server: "2606:4700:104::2"
+    port: 4500
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-4443
+    type: masque
+    server: "2606:4700:104::2"
+    port: 4443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-8443
+    type: masque
+    server: "2606:4700:104::2"
+    port: 8443
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: v6-104-2-8095
+    type: masque
+    server: "2606:4700:104::2"
+    port: 8095
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: 官方域名
+    type: masque
+    server: 162.159.198.1
+    port: 443
+    sni: zt-masque.cloudflareclient.com
+    private-key: MHcCAQEEINSMRt3QdUIJwanEAW8LGy2nN0ny8LUBY2IHGN8HBmbBoAoGCCqGSM49AwEHoUQDQgAE0aXXsyG3RlN7gq2tJcNTIGOdxcSsvvOW4Uq8xonphFIpgTC7PLQVPSAnRHFLVLRfXaQvNolcrZ19hRBtYtRi5g==
+    public-key: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEIaU7MToJm9NKp8YfGxR6r+/h4mcG7SxI8tsW8OR1A5tv/zCzVbCRRh2t87/kxnP6lAy0lkr7qYwu+ox+k3dr6w==
+    ip: 172.16.0.2
+    ipv6: 2606:4700:110:8cb8:6045:376c:4ba8:25b3
+    mtu: 1280
+    udp: true
+    remote-dns-resolve: true
+    dns: [1.1.1.1, 2606:4700:4700::1111]
+  - name: "🏠 JP-家宽-01"
+    type: openvpn
+    server: 123.198.157.132
+    port: 1443
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: &jkca |-
+      -----BEGIN CERTIFICATE-----
+      MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+      TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+      cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+      WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+      ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+      MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+      h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+      0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+      A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+      T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+      B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+      B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+      KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+      OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+      jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+      qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+      rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+      HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+      hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+      ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+      3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+      NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+      ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+      TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+      jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+      oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+      4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+      mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+      emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+      -----END CERTIFICATE-----
+    cert: &jkcert |-
+      -----BEGIN CERTIFICATE-----
+      MIICxjCCAa4CAQAwDQYJKoZIhvcNAQEFBQAwKTEaMBgGA1UEAxMRVlBOR2F0ZUNs
+      aWVudENlcnQxCzAJBgNVBAYTAkpQMB4XDTEzMDIxMTAzNDk0OVoXDTM3MDExOTAz
+      MTQwN1owKTEaMBgGA1UEAxMRVlBOR2F0ZUNsaWVudENlcnQxCzAJBgNVBAYTAkpQ
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5h2lgQQYUjwoKYJbzVZA
+      5VcIGd5otPc/qZRMt0KItCFA0s9RwReNVa9fDRFLRBhcITOlv3FBcW3E8h1Us7RD
+      4W8GmJe8zapJnLsD39OSMRCzZJnczW4OCH1PZRZWKqDtjlNca9AF8a65jTmlDxCQ
+      CjntLIWk5OLLVkFt9/tScc1GDtci55ofhaNAYMPiH7V8+1g66pGHXAoWK6AQVH67
+      XCKJnGB5nlQ+HsMYPV/O49Ld91ZN/2tHkcaLLyNtywxVPRSsRh480jju0fcCsv6h
+      p/0yXnTB//mWutBGpdUlIbwiITbAmrsbYnjigRvnPqX1RNJUbi9Fp6C2c/HIFJGD
+      ywIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQChO5hgcw/4oWfoEFLu9kBa1B//kxH8
+      hQkChVNn8BRC7Y0URQitPl3DKEed9URBDdg2KOAz77bb6ENPiliD+a38UJHIRMqe
+      UBHhllOHIzvDhHFbaovALBQceeBzdkQxsKQESKmQmR832950UCovoyRB61UyAV7h
+      +mZhYPGRKXKSJI6s0Egg/Cri+Cwk4bjJfrb5hVse11yh4D9MHhwSfCOH+0z4hPUT
+      Fku7dGavURO5SVxMn/sL6En5D+oSeXkadHpDs+Airym2YHh15h0+jPSOoR6yiVp/
+      6zZeZkrN43kuS73KpKDFjfFPh8t4r1gOIjttkNcQqBccusnplQ7HJpsk
+      -----END CERTIFICATE-----
+    key: &jkkey |-
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpAIBAAKCAQEA5h2lgQQYUjwoKYJbzVZA5VcIGd5otPc/qZRMt0KItCFA0s9R
+      wReNVa9fDRFLRBhcITOlv3FBcW3E8h1Us7RD4W8GmJe8zapJnLsD39OSMRCzZJnc
+      zW4OCH1PZRZWKqDtjlNca9AF8a65jTmlDxCQCjntLIWk5OLLVkFt9/tScc1GDtci
+      55ofhaNAYMPiH7V8+1g66pGHXAoWK6AQVH67XCKJnGB5nlQ+HsMYPV/O49Ld91ZN
+      /2tHkcaLLyNtywxVPRSsRh480jju0fcCsv6hp/0yXnTB//mWutBGpdUlIbwiITbA
+      mrsbYnjigRvnPqX1RNJUbi9Fp6C2c/HIFJGDywIDAQABAoIBAERV7X5AvxA8uRiK
+      k8SIpsD0dX1pJOMIwakUVyvc4EfN0DhKRNb4rYoSiEGTLyzLpyBc/A28Dlkm5eOY
+      fjzXfYkGtYi/Ftxkg3O9vcrMQ4+6i+uGHaIL2rL+s4MrfO8v1xv6+Wky33EEGCou
+      QiwVGRFQXnRoQ62NBCFbUNLhmXwdj1akZzLU4p5R4zA3QhdxwEIatVLt0+7owLQ3
+      lP8sfXhppPOXjTqMD4QkYwzPAa8/zF7acn4kryrUP7Q6PAfd0zEVqNy9ZCZ9ffho
+      zXedFj486IFoc5gnTp2N6jsnVj4LCGIhlVHlYGozKKFqJcQVGsHCqq1oz2zjW6LS
+      oRYIHgECgYEA8zZrkCwNYSXJuODJ3m/hOLVxcxgJuwXoiErWd0E42vPanjjVMhnt
+      KY5l8qGMJ6FhK9LYx2qCrf/E0XtUAZ2wVq3ORTyGnsMWre9tLYs55X+ZN10Tc75z
+      4hacbU0hqKN1HiDmsMRY3/2NaZHoy7MKnwJJBaG48l9CCTlVwMHocIECgYEA8jby
+      dGjxTH+6XHWNizb5SRbZxAnyEeJeRwTMh0gGzwGPpH/sZYGzyu0SySXWCnZh3Rgq
+      5uLlNxtrXrljZlyi2nQdQgsq2YrWUs0+zgU+22uQsZpSAftmhVrtvet6MjVjbByY
+      DADciEVUdJYIXk+qnFUJyeroLIkTj7WYKZ6RjksCgYBoCFIwRDeg42oK89RFmnOr
+      LymNAq4+2oMhsWlVb4ejWIWeAk9nc+GXUfrXszRhS01mUnU5r5ygUvRcarV/T3U7
+      TnMZ+I7Y4DgWRIDd51znhxIBtYV5j/C/t85HjqOkH+8b6RTkbchaX3mau7fpUfds
+      Fq0nhIq42fhEO8srfYYwgQKBgQCyhi1N/8taRwpk+3/IDEzQwjbfdzUkWWSDk9Xs
+      H/pkuRHWfTMP3flWqEYgW/LW40peW2HDq5imdV8+AgZxe/XMbaji9Lgwf1RY005n
+      KxaZQz7yqHupWlLGF68DPHxkZVVSagDnV/sztWX6SFsCqFVnxIXifXGC4cW5Nm9g
+      va8q4QKBgQCEhLVeUfdwKvkZ94g/GFz731Z2hrdVhgMZaU/u6t0V95+YezPNCQZB
+      wmE9Mmlbq1emDeROivjCfoGhR3kZXW1pTKlLh6ZMUQUOpptdXva8XxfoqQwa3enA
+      M7muBbF0XN7VO80iJPv+PmIZdEIAkpwKfi201YB+BafCIuGxIF50Vg==
+      -----END RSA PRIVATE KEY-----
+  - name: "🏠 JP-家宽-02"
+    type: openvpn
+    server: 113.155.30.115
+    port: 1730
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-03"
+    type: openvpn
+    server: 116.67.212.245
+    port: 1254
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-04"
+    type: openvpn
+    server: 183.176.108.57
+    port: 1451
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-05"
+    type: openvpn
+    server: 220.217.200.42
+    port: 1339
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-01"
+    type: openvpn
+    server: 218.237.198.15
+    port: 1773
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-06"
+    type: openvpn
+    server: 126.60.187.34
+    port: 1823
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 TH-家宽-01"
+    type: openvpn
+    server: 171.5.167.212
+    port: 1408
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 US-家宽-01"
+    type: openvpn
+    server: 206.83.106.176
+    port: 443
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-07"
+    type: openvpn
+    server: 126.221.221.240
+    port: 1819
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 RU-家宽-01"
+    type: openvpn
+    server: 77.34.16.16
+    port: 1577
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 RU-家宽-02"
+    type: openvpn
+    server: 77.35.51.4
+    port: 1744
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-02"
+    type: openvpn
+    server: 222.237.120.227
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-08"
+    type: openvpn
+    server: 210.198.250.157
+    port: 1895
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-09"
+    type: openvpn
+    server: 60.125.73.210
+    port: 1508
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-03"
+    type: openvpn
+    server: 211.228.130.72
+    port: 1879
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-04"
+    type: openvpn
+    server: 221.156.57.129
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-10"
+    type: openvpn
+    server: 110.163.135.206
+    port: 1194
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-11"
+    type: openvpn
+    server: 124.100.138.216
+    port: 1496
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-05"
+    type: openvpn
+    server: 118.35.232.135
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-12"
+    type: openvpn
+    server: 60.71.4.56
+    port: 1393
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-13"
+    type: openvpn
+    server: 60.238.158.249
+    port: 1267
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-06"
+    type: openvpn
+    server: 220.84.236.107
+    port: 1609
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-14"
+    type: openvpn
+    server: 111.216.146.16
+    port: 1417
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-15"
+    type: openvpn
+    server: 126.227.98.230
+    port: 1527
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-16"
+    type: openvpn
+    server: 42.125.162.163
+    port: 1521
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 VN-家宽-01"
+    type: openvpn
+    server: 42.115.17.236
+    port: 1512
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-07"
+    type: openvpn
+    server: 220.70.189.69
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 TH-家宽-02"
+    type: openvpn
+    server: 27.130.36.132
+    port: 1759
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 RO-家宽-01"
+    type: openvpn
+    server: 217.138.212.62
+    port: 443
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-17"
+    type: openvpn
+    server: 222.5.66.192
+    port: 1262
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-18"
+    type: openvpn
+    server: 180.221.239.185
+    port: 1462
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-19"
+    type: openvpn
+    server: 124.140.137.87
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-08"
+    type: openvpn
+    server: 221.156.184.248
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-09"
+    type: openvpn
+    server: 14.63.28.29
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-10"
+    type: openvpn
+    server: 222.238.35.45
+    port: 995
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-11"
+    type: openvpn
+    server: 125.139.168.226
+    port: 1663
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 JP-家宽-20"
+    type: openvpn
+    server: 115.179.206.241
+    port: 443
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-12"
+    type: openvpn
+    server: 211.49.100.28
+    port: 1913
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+  - name: "🏠 KR-家宽-13"
+    type: openvpn
+    server: 59.14.17.227
+    port: 1387
+    proto: tcp
+    username: vpn
+    password: vpn
+    cipher: AES-128-CBC
+    auth: SHA1
+    udp: false
+    handshake-timeout: 30
+    remote-dns-resolve: true
+    dns: [8.8.8.8, 1.1.1.1]
+    dialer-proxy: "⚡ MASQUE前置"
+    ca: *jkca
+    cert: *jkcert
+    key: *jkkey
+
+proxy-groups:
+  - name: "⚡ MASQUE前置"
+    type: url-test
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+    lazy: true
+    proxies:
+      - 198.1-443
+      - 198.1-500
+      - 198.1-1701
+      - 198.1-4500
+      - 198.1-4443
+      - 198.1-8443
+      - 198.1-8095
+      - 198.2-443
+      - 198.2-500
+      - 198.2-1701
+      - 198.2-4500
+      - 198.2-4443
+      - 198.2-8443
+      - 198.2-8095
+      - 199.1-443
+      - 199.1-500
+      - 199.1-1701
+      - 199.1-4500
+      - 199.1-4443
+      - 199.1-8443
+      - 199.1-8095
+      - 199.2-443
+      - 199.2-500
+      - 199.2-1701
+      - 199.2-4500
+      - 199.2-4443
+      - 199.2-8443
+      - 199.2-8095
+      - v6-103-1-443
+      - v6-103-1-500
+      - v6-103-1-1701
+      - v6-103-1-4500
+      - v6-103-1-4443
+      - v6-103-1-8443
+      - v6-103-1-8095
+      - v6-103-2-443
+      - v6-103-2-500
+      - v6-103-2-1701
+      - v6-103-2-4500
+      - v6-103-2-4443
+      - v6-103-2-8443
+      - v6-103-2-8095
+      - v6-104-1-443
+      - v6-104-1-500
+      - v6-104-1-1701
+      - v6-104-1-4500
+      - v6-104-1-4443
+      - v6-104-1-8443
+      - v6-104-1-8095
+      - v6-104-2-443
+      - v6-104-2-500
+      - v6-104-2-1701
+      - v6-104-2-4500
+      - v6-104-2-4443
+      - v6-104-2-8443
+      - v6-104-2-8095
+      - 官方域名
+
+  - name: "🏠 家宽自动"
+    type: fallback
+    url: https://www.gstatic.com/generate_204
+    interval: 1800
+    lazy: true
+    proxies:
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 KR-家宽-01"
+      - "🏠 JP-家宽-06"
+      - "🏠 TH-家宽-01"
+      - "🏠 US-家宽-01"
+      - "🏠 JP-家宽-07"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 KR-家宽-02"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 KR-家宽-05"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 KR-家宽-06"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 VN-家宽-01"
+      - "🏠 KR-家宽-07"
+      - "🏠 TH-家宽-02"
+      - "🏠 RO-家宽-01"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+
+  - name: "🏠 家宽节点"
+    type: select
+    proxies:
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 JP-家宽-06"
+      - "🏠 JP-家宽-07"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-01"
+      - "🏠 KR-家宽-02"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 KR-家宽-05"
+      - "🏠 KR-家宽-06"
+      - "🏠 KR-家宽-07"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+      - "🏠 RO-家宽-01"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 TH-家宽-01"
+      - "🏠 TH-家宽-02"
+      - "🏠 US-家宽-01"
+      - "🏠 VN-家宽-01"
+
+  - name: 🚀 节点选择
+    type: select
+    proxies:
+      - "🏠 家宽自动"
+      - "🏠 家宽节点"
+      - "⚡ MASQUE前置"
+      - DIRECT
+
+  - name: ♻️ 自动选择
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+    lazy: true
+    proxies:
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 KR-家宽-01"
+      - "🏠 JP-家宽-06"
+      - "🏠 TH-家宽-01"
+      - "🏠 US-家宽-01"
+      - "🏠 JP-家宽-07"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 KR-家宽-02"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 KR-家宽-05"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 KR-家宽-06"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 VN-家宽-01"
+      - "🏠 KR-家宽-07"
+      - "🏠 TH-家宽-02"
+      - "🏠 RO-家宽-01"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+
+  - name: 📹 油管视频
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 KR-家宽-01"
+      - "🏠 JP-家宽-06"
+      - "🏠 TH-家宽-01"
+      - "🏠 US-家宽-01"
+      - "🏠 JP-家宽-07"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 KR-家宽-02"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 KR-家宽-05"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 KR-家宽-06"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 VN-家宽-01"
+      - "🏠 KR-家宽-07"
+      - "🏠 TH-家宽-02"
+      - "🏠 RO-家宽-01"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+
+  - name: 🎥 奈飞视频
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 KR-家宽-01"
+      - "🏠 JP-家宽-06"
+      - "🏠 TH-家宽-01"
+      - "🏠 US-家宽-01"
+      - "🏠 JP-家宽-07"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 KR-家宽-02"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 KR-家宽-05"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 KR-家宽-06"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 VN-家宽-01"
+      - "🏠 KR-家宽-07"
+      - "🏠 TH-家宽-02"
+      - "🏠 RO-家宽-01"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+
+  - name: 📲 电报信息
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - 🎯 全球直连
+
+  - name: 🤖 AI服务
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - "🏠 JP-家宽-01"
+      - "🏠 JP-家宽-02"
+      - "🏠 JP-家宽-03"
+      - "🏠 JP-家宽-04"
+      - "🏠 JP-家宽-05"
+      - "🏠 KR-家宽-01"
+      - "🏠 JP-家宽-06"
+      - "🏠 TH-家宽-01"
+      - "🏠 US-家宽-01"
+      - "🏠 JP-家宽-07"
+      - "🏠 RU-家宽-01"
+      - "🏠 RU-家宽-02"
+      - "🏠 KR-家宽-02"
+      - "🏠 JP-家宽-08"
+      - "🏠 JP-家宽-09"
+      - "🏠 KR-家宽-03"
+      - "🏠 KR-家宽-04"
+      - "🏠 JP-家宽-10"
+      - "🏠 JP-家宽-11"
+      - "🏠 KR-家宽-05"
+      - "🏠 JP-家宽-12"
+      - "🏠 JP-家宽-13"
+      - "🏠 KR-家宽-06"
+      - "🏠 JP-家宽-14"
+      - "🏠 JP-家宽-15"
+      - "🏠 JP-家宽-16"
+      - "🏠 VN-家宽-01"
+      - "🏠 KR-家宽-07"
+      - "🏠 TH-家宽-02"
+      - "🏠 RO-家宽-01"
+      - "🏠 JP-家宽-17"
+      - "🏠 JP-家宽-18"
+      - "🏠 JP-家宽-19"
+      - "🏠 KR-家宽-08"
+      - "🏠 KR-家宽-09"
+      - "🏠 KR-家宽-10"
+      - "🏠 KR-家宽-11"
+      - "🏠 JP-家宽-20"
+      - "🏠 KR-家宽-12"
+      - "🏠 KR-家宽-13"
+
+  - name: 🎯 全球直连
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+
+  - name: 🛑 全球拦截
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+  - name: 🍃 应用净化
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+rule-providers:
+  rule00:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/cmliu/ACL4SSR/refs/heads/main/Clash/CFnat.list
+    path: ./ruleset/rule00.list
+  rule01:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list
+    path: ./ruleset/rule01.list
+  rule02:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
+    path: ./ruleset/rule02.list
+  rule03:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list
+    path: ./ruleset/rule03.list
+  rule04:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Telegram.list
+    path: ./ruleset/rule04.list
+  rule05:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/OpenAi.list
+    path: ./ruleset/rule05.list
+  rule06:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/YouTube.list
+    path: ./ruleset/rule06.list
+  rule07:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Netflix.list
+    path: ./ruleset/rule07.list
+  rule08:
+    type: http
+    behavior: classical
+    format: text
+    interval: 86400
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyLite.list
+    path: ./ruleset/rule08.list
+
+rules:
+  - RULE-SET,rule00,🎯 全球直连
+  - RULE-SET,rule01,🎯 全球直连
+  - RULE-SET,rule02,🛑 全球拦截
+  - RULE-SET,rule03,🍃 应用净化
+  - RULE-SET,rule04,📲 电报信息
+  - RULE-SET,rule05,🤖 AI服务
+  - RULE-SET,rule06,📹 油管视频
+  - RULE-SET,rule07,🎥 奈飞视频
+  - RULE-SET,rule08,🚀 节点选择
+  - GEOIP,LAN,🎯 全球直连,no-resolve
+  - GEOIP,CN,🎯 全球直连
+  - MATCH,🚀 节点选择
