@@ -197,7 +197,7 @@ async function go(e){
 </body></html>`;
 }
 
-export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage) {
+export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage, jk = {}) {
   const s = state || {};
   const warp = s.warp || {};
   const stat = s.stats || {};
@@ -210,6 +210,9 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
     : `${Math.floor(left / 60)} 小时 ${left % 60} 分后过期`;
   const fmt = (d) => d ? d.toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
   const sub = `https://${host}${sp}?token=${token}`;
+  const jkSub = `https://${host}${sp}?token=${token}&target=jk`;
+  const jkEnabled = !!(jk && jk.jkEnabled);
+  const jkMeta = (jk && jk.jkMeta) || null;
   const pushUrl = pushToken ? `https://${host}/push/${pushToken}` : "";
   const pExp = protonCred && protonCred.expiresAt
     ? new Date(protonCred.expiresAt * 1000) : null;
@@ -323,6 +326,29 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
     </div>
 
     <div class="sec">
+      <div class="sec-t">家宽链式</div>
+      ${row("状态", jkEnabled ? "已开启" : "未开启", jkEnabled ? "ok" : "warn")}
+      ${jkEnabled && jkMeta ? row("落地节点", `${jkMeta.landings || 0} 条（缓存至 ${fmt(jkMeta.expiresAt ? new Date(jkMeta.expiresAt) : null)}）`, "ok") : ""}
+      ${jkEnabled ? `
+      <div class="sub" style="margin-top:10px">
+        <input id="jk" value="${jkSub}" readonly>
+        <button onclick="cp('jk')">复制</button>
+        <button class="gh" onclick="location.href=document.getElementById('jk').value">下载</button>
+      </div>
+      ` : ""}
+      <div class="sub" style="margin-top:10px">
+        <button onclick="jkToggle(${jkEnabled ? "false" : "true"})">${jkEnabled ? "关闭家宽链式" : "开启家宽链式"}</button>
+        ${jkEnabled ? `<button class="gh" onclick="go('/api/jia-kuan/refresh')">刷新家宽节点</button>` : ""}
+      </div>
+      <div class="note">
+        MASQUE 当前置，落地换成 <a href="https://www.vpngate.net/cn/" target="_blank" rel="noopener" style="color:var(--cyan)">VPN Gate</a>
+        志愿者共享的家庭宽带，出网是住宅 IP（日本、韩国居多）。<br>
+        开启后订阅地址加 <code>?target=jk</code> 即为家宽专属订阅。<br>
+        节点掉线正常，客户端用「🏠 家宽自动」会自己往下换。需要 mihomo（openvpn + dialer-proxy）。
+      </div>
+    </div>
+
+    <div class="sec">
       <div class="sec-t">节点</div>
       <div class="grid">
         <div class="cell"><div class="n">${stat.combos ?? "—"}</div><div class="l">组合节点</div></div>
@@ -407,50 +433,35 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       <div class="row"><span class="k">状态</span><span class="v warn">未启用</span></div>
       `}
       <div class="note">
-        免费额度 <b>每月 2GB</b>，落地是机房 IP（M247 为主），
-        13 个地区里<b>亚洲只有香港</b>。<br>
-        账号走 GitHub Actions 开 —— Worker 自己开不出能用的号，
-        Cloudflare 的出口 IP 是共享的，早被人用过，
-        Windscribe 只会发 1MB 的降额号，那种号连代理凭据都取不到。<br>
-        跑一次 <b>取 Windscribe 账号</b> 流水线就行，用的是上面那个推送地址。
-        额度用完了再跑一次换个号。
-        ${windInfo ? '<br><a href="#" onclick="go(\'/api/wind/clear\');return false" ' +
-          'style="color:var(--red)">清除 Windscribe 账号</a>' : ""}
+        免费 2GB/月。开户要干净 IP，所以走 GitHub Actions，Worker 只收结果。<br>
+        和 Proton 共用同一个推送地址（末尾加 <code>/wind</code>）。
+        ${windInfo ? '<br><a href="#" onclick="go(\'/api/wind/clear\');return false" style="color:var(--red)">清除账号（换号请重跑流水线）</a>' : ""}
       </div>
     </div>
 
     <div class="sec">
       <div class="sec-t">订阅路径</div>
       <div class="sub">
-        <input id="sp" value="${sp.replace(/^\//, "")}" spellcheck="false"
-               placeholder="字母数字和 - _">
-        <button onclick="setPath('sp')">保存</button>
+        <input id="sp" value="${sp.replace(/^\//, "")}" placeholder="sub">
+        <button onclick="setPath()">保存</button>
       </div>
-      <div class="note">
-        改成难猜的字符串，等于在密码之外多一层。改完上面的订阅链接要重新复制。
-      </div>
+      <div class="note">只能用字母数字和 - _，改完订阅链接会变。</div>
     </div>
 
     <div class="sec">
       <div class="sec-t">修改密码</div>
       <div class="pw">
         <input type="password" id="c0" placeholder="当前密码" autocomplete="current-password">
-        <input type="password" id="c1" placeholder="新密码（>= 8）" autocomplete="new-password">
-        <input type="password" id="c2" placeholder="确认新密码" autocomplete="new-password">
+        <input type="password" id="c1" placeholder="新密码 (>= 8)" autocomplete="new-password">
+        <input type="password" id="c2" placeholder="再输一次" autocomplete="new-password">
         <button onclick="setPw()">修改</button>
       </div>
-      <div class="note">
-        改完<b>所有旧订阅链接立刻失效</b>，因为 token 是用密码哈希签的。
-        链接泄露了就靠这个补救。
-      </div>
+      <div class="note">改完所有旧订阅链接立刻失效，需要重新复制。</div>
     </div>
 
     <div class="sec">
       <div class="sec-t">须知</div>
       <div class="note">
-        必须用 <b>mihomo Alpha</b> 内核，masque 出站和 dialer-proxy 稳定版都不支持。<br>
-        可用客户端：Clash Verge Rev（内核切 Alpha）、ClashMi、FlClash。<br>
-        Shadowrocket、Stash 不认 dialer-proxy，导进去只有 WARP直连 那组能用。<br>
         订阅链接里的 token 就是访问凭证，<b>别外传</b>，泄露了改密码即可全部失效。<br>
         配置里的 private-key 等同 WARP 账号凭据。<br>
         免费代理的流量对提供方可见，别走支付和敏感数据。
@@ -493,6 +504,9 @@ function setPath(id){
   if(!v){say('路径不能为空','var(--red)');return;}
   post('/api/sub-path',{path:v},'已保存');
 }
+function jkToggle(on){
+  post('/api/jia-kuan',{enabled:!!on}, on ? '家宽链式已开启' : '家宽链式已关闭');
+}
 function setPw(){
   const c0=document.getElementById('c0').value;
   const c1=document.getElementById('c1').value;
@@ -509,7 +523,7 @@ async function go(p){
   try{
     const r=await fetch(p,{method:'POST'});
     const j=await r.json();
-    if(j.ok){say(j.msg+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1200);}
+    if(j.ok){say((j.msg||'完成')+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1400);}
     else{say('失败: '+j.error,'var(--red)');bs.forEach(b=>b.disabled=false);}
   }catch(e){say('失败: '+e.message,'var(--red)');bs.forEach(b=>b.disabled=false);}
 }
