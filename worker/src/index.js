@@ -11,6 +11,7 @@ import { registerWarp } from "./warp.js";
 import { fetchOpera } from "./opera.js";
 import { buildConfig } from "./config.js";
 import { buildJiaKuanConfig } from "./jia_kuan.js";
+import { defaultFreeSettings, FREE_COUNTRIES } from "./free_land.js";
 import { parseBlob } from "./proton.js";
 import { fetchWindscribe, fetchSession } from "./windscribe.js";
 import { renderUI, renderLogin, renderSetup, renderNoKV } from "./ui.js";
@@ -19,29 +20,25 @@ import {
   readCookie, rateLimit, clearRateLimit, normalizePath,
 } from "./auth.js";
 
-const K_WARP = "warp:device";     // WARP 注册信息，长期复用
-const K_CFG = "config:yaml";      // 聚合配置（套娃线路 + WARP 直连）
-const K_JK = "config:jia-kuan";   // 家宽链式订阅缓存
-const K_JK_META = "state:jia-kuan"; // 家宽缓存元数据
-const K_STATE = "state:meta";     // 状态元数据，给 UI 用
-const K_CRED = "auth:cred";       // 密码哈希 + 盐
-const K_SET = "settings";         // 订阅路径等设置
-const K_CLAIM = "auth:claim";     // 初始化时的抢占标记
-const K_PROTON = "proton:cred";   // Proton 凭据（由流水线推送）
-const K_PUSH = "proton:token";    // 流水线的写入令牌
-const K_WIND = "wind:account";    // Windscribe 账号，长期复用（连着开户会被降额）
-const K_LOCK = "rebuild:lock";    // 重建锁，防并发重复注册
-const K_EP = "endpoints:custom";  // 远程提交的优选 IP/域名
-const K_EP_META = "endpoints:meta"; // 优选列表元数据
+const K_WARP = "warp:device";
+const K_CFG = "config:yaml";
+const K_JK = "config:jia-kuan";
+const K_JK_META = "state:jia-kuan";
+const K_STATE = "state:meta";
+const K_CRED = "auth:cred";
+const K_SET = "settings";
+const K_CLAIM = "auth:claim";
+const K_PROTON = "proton:cred";
+const K_PUSH = "proton:token";
+const K_WIND = "wind:account";
+const K_LOCK = "rebuild:lock";
+const K_EP = "endpoints:custom";
+const K_EP_META = "endpoints:meta";
 const COOKIE = "om_session";
 const DEFAULT_SUB = "sub";
 
-// Opera 凭据有效期。opera-proxy 默认每 4 小时刷新一次登录和设备密码
-// （main.go: -refresh 4h），API 本身不返回真实 TTL，按这个值走。
-// 留 10 分钟余量，别卡着点过期。
 const TTL_MS = 4 * 3600 * 1000;
 const SKEW_MS = 10 * 60 * 1000;
-// 家宽节点清单缓存 30 分钟（与 jia_kuan.js 内存缓存对齐）
 const JK_TTL_MS = 30 * 60 * 1000;
 
 const json = (o, s = 200) =>
@@ -61,23 +58,45 @@ const html = (body, s = 200) =>
 
 const notFound = () => new Response("Not Found", { status: 404 });
 
-async function getSettings(env) {
-  const s = (await env.KV.get(K_SET, "json")) || {};
+function defaultAdvanced() {
   return {
-    subPath: s.subPath || DEFAULT_SUB,
-    // 家宽链式：默认关闭，管理页勾上后订阅地址加 ?target=jk 即专属订阅
-    jkEnabled: !!s.jkEnabled,
+    sni: "",
+    mtu: 1280,
+    dns: ["1.1.1.1", "8.8.8.8", "2606:4700:4700::1111", "2001:4860:4860::8888"],
+    network: "quic",
+    stack: "auto",
+    cc: "",
+    outerCc: "",
+    bbrProfile: "",
+    remoteDns: true,
+    udp: true,
   };
 }
 
-/** 读取远程提交的优选接入点。 */
+async function getSettings(env) {
+  const s = (await env.KV.get(K_SET, "json")) || {};
+  const free = { ...defaultFreeSettings(), ...(s.free || {}) };
+  if (!Array.isArray(free.countries) || !free.countries.length) {
+    free.countries = defaultFreeSettings().countries;
+  }
+  const advanced = { ...defaultAdvanced(), ...(s.advanced || {}) };
+  if (!Array.isArray(advanced.dns) || !advanced.dns.length) {
+    advanced.dns = defaultAdvanced().dns;
+  }
+  return {
+    subPath: s.subPath || DEFAULT_SUB,
+    jkEnabled: !!s.jkEnabled,
+    free,
+    advanced,
+  };
+}
+
 async function getCustomEndpoints(env) {
   const list = (await env.KV.get(K_EP, "json")) || [];
   const meta = (await env.KV.get(K_EP_META, "json")) || {};
   return { list: Array.isArray(list) ? list : [], meta };
 }
 
-/** 生成 / 刷新家宽订阅。未开启时返回 null。 */
 async function ensureJiaKuan(env, { force = false } = {}) {
   const settings = await getSettings(env);
   if (!settings.jkEnabled) return null;
@@ -107,7 +126,6 @@ async function ensureJiaKuan(env, { force = false } = {}) {
   return yaml;
 }
 
-/** 拿 WARP 设备信息，KV 里有就复用，没有才注册。 */
 async function getWarp(env, force = false) {
   if (!force) {
     const cached = await env.KV.get(K_WARP, "json");
@@ -118,14 +136,12 @@ async function getWarp(env, force = false) {
   return w;
 }
 
-/** Windscribe 账号只用流水线推来的那个，Worker 不自己开户。 */
 async function getWind(env) {
   const acc = await env.KV.get(K_WIND, "json");
   if (!acc || !acc.sessionAuthHash) return null;
   return await fetchWindscribe(acc);
 }
 
-/** 重建配置。WARP 复用，Opera 每次重取（凭据会过期）。 */
 async function rebuild(env, { forceWarp = false } = {}) {
   const warp = await getWarp(env, forceWarp);
   const opera = await fetchOpera();
@@ -139,14 +155,17 @@ async function rebuild(env, { forceWarp = false } = {}) {
     windErr = e.message;
   }
   const custom = await getCustomEndpoints(env);
-  const { yaml, entries, landings, combos, proton: pn, wind: wn } =
-    buildConfig(warp, opera, proton, wind, { list: custom.list, mode: custom.meta.mode || "merge" });
+  const settings = await getSettings(env);
+  const { yaml, entries, landings, combos, proton: pn, wind: wn, free: fn } =
+    buildConfig(warp, opera, proton, wind,
+      { list: custom.list, mode: custom.meta.mode || "merge" },
+      { free: settings.free, advanced: settings.advanced });
 
   const now = Date.now();
   const state = {
     updatedAt: new Date(now).toISOString(),
     expiresAt: new Date(now + TTL_MS).toISOString(),
-    stats: { entries, landings, combos, proton: pn || 0, wind: wn || 0 },
+    stats: { entries, landings, combos, proton: pn || 0, wind: wn || 0, free: fn || 0 },
     protonExpiresAt: proton ? proton.expiresAt : null,
     wind: wind ? { userId: wind.account.userId, servers: wn || 0 } : null,
     windErr,
@@ -286,7 +305,6 @@ export default {
       });
     }
 
-    // ---- 流水线推送：Proton / Windscribe / 优选接入点 ----
     if (path.startsWith("/push/") && req.method === "POST") {
       const tk = await env.KV.get(K_PUSH);
       const rest = path.slice(6);
@@ -299,9 +317,7 @@ export default {
 
       if (kind === "wind") {
         let acc;
-        try {
-          acc = JSON.parse(body);
-        } catch {
+        try { acc = JSON.parse(body); } catch {
           return json({ ok: false, error: "不是合法的 JSON" }, 400);
         }
         if (!acc || !acc.sessionAuthHash || !acc.locHash) {
@@ -320,9 +336,6 @@ export default {
       }
 
       if (kind === "endpoints" || kind === "ep" || kind === "ips") {
-        // 本地优选后远程提交：POST /push/<token>/endpoints
-        // body: { "endpoints": ["ip:port", "domain:port", ...], "replace": true, "mode": "merge"|"prefer"|"only" }
-        // 也接受纯文本，一行一个
         let items = [], mode = "merge", replace = true;
         const ct = (req.headers.get("content-type") || "").toLowerCase();
         if (ct.includes("application/json")) {
@@ -376,9 +389,7 @@ export default {
       }
 
       let parsed;
-      try {
-        parsed = parseBlob(body);
-      } catch (e) {
+      try { parsed = parseBlob(body); } catch (e) {
         return json({ ok: false, error: e.message }, 400);
       }
       await env.KV.put(K_PROTON, JSON.stringify(parsed));
@@ -436,7 +447,9 @@ export default {
       return html(renderUI(state, url.host, subPath, token, cred,
                            pushToken, protonCred, windUsage,
                            { jkEnabled: settings.jkEnabled, jkMeta },
-                           { endpoints: epCustom.list, meta: epCustom.meta }));
+                           { endpoints: epCustom.list, meta: epCustom.meta },
+                           { free: settings.free, advanced: settings.advanced,
+                             freeCountries: FREE_COUNTRIES }));
     }
 
     if (!authed) return notFound();
@@ -501,7 +514,74 @@ export default {
           meta,
         });
       } catch (e) {
-        return json({ ok: false, error: "开启失败：" + e.message }, 500);
+        return json({
+          ok: true,
+          msg: "已开启，但节点暂时拉不到：" + (e.message || e) + "。订阅时会重试。",
+        });
+      }
+    }
+
+    if (path === "/api/free-land" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const allowed = new Set(FREE_COUNTRIES.map((c) => c.code));
+      let countries = Array.isArray(body.countries)
+        ? body.countries.map(String).filter((c) => allowed.has(c))
+        : settings.free.countries;
+      if (!countries.length) countries = defaultFreeSettings().countries;
+      const free = {
+        enabled: body.enabled !== undefined ? !!body.enabled : settings.free.enabled,
+        useWarp: body.useWarp !== undefined ? !!body.useWarp : settings.free.useWarp,
+        scope: ["ai-streaming", "ai-only", "streaming-only", "all-foreign"].includes(body.scope)
+          ? body.scope : settings.free.scope,
+        protocolMode: body.protocolMode === "all" ? "all" : "stable",
+        countries,
+      };
+      await env.KV.put(K_SET, JSON.stringify({ ...settings, free }));
+      try {
+        await rebuild(env);
+        return json({ ok: true, msg: free.enabled
+          ? `免费落地已开启：${free.countries.join(", ")}`
+          : "免费落地已关闭", free });
+      } catch (e) {
+        return json({ ok: true, msg: "已保存，但重建失败：" + e.message, free });
+      }
+    }
+
+    if (path === "/api/advanced" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const adv = { ...settings.advanced };
+      if (body.sni !== undefined) adv.sni = String(body.sni || "").trim();
+      if (body.mtu !== undefined) {
+        const m = Number(body.mtu);
+        if (m >= 576 && m <= 1500) adv.mtu = m;
+      }
+      if (body.dns !== undefined) {
+        const list = Array.isArray(body.dns)
+          ? body.dns
+          : String(body.dns || "").split(/[,\s]+/);
+        adv.dns = list.map((x) => String(x).trim()).filter(Boolean).slice(0, 8);
+        if (!adv.dns.length) adv.dns = defaultAdvanced().dns;
+      }
+      if (["quic", "h2"].includes(body.network)) adv.network = body.network;
+      if (["auto", "gvisor", "mips"].includes(body.stack)) adv.stack = body.stack;
+      if (body.cc !== undefined) {
+        adv.cc = ["", "cubic", "reno", "bbr", "bbr3"].includes(body.cc) ? body.cc : adv.cc;
+      }
+      if (body.outerCc !== undefined) {
+        adv.outerCc = ["", "bbr"].includes(body.outerCc) ? body.outerCc : adv.outerCc;
+      }
+      if (body.bbrProfile !== undefined) {
+        adv.bbrProfile = ["", "standard", "conservative", "aggressive"].includes(body.bbrProfile)
+          ? body.bbrProfile : adv.bbrProfile;
+      }
+      if (body.remoteDns !== undefined) adv.remoteDns = !!body.remoteDns;
+      if (body.udp !== undefined) adv.udp = !!body.udp;
+      await env.KV.put(K_SET, JSON.stringify({ ...settings, advanced: adv }));
+      try {
+        await rebuild(env);
+        return json({ ok: true, msg: "MASQUE 高级设置已保存并重建配置", advanced: adv });
+      } catch (e) {
+        return json({ ok: true, msg: "已保存，但重建失败：" + e.message, advanced: adv });
       }
     }
 
@@ -514,51 +594,47 @@ export default {
         const meta = await env.KV.get(K_JK_META, "json");
         return json({ ok: true, msg: `已刷新，${meta?.landings || 0} 条落地`, meta });
       } catch (e) {
-        return json({ ok: false, error: e.message }, 500);
+        return json({ ok: false, error: e.message || String(e) }, 500);
       }
     }
 
     if (path === "/api/refresh" && req.method === "POST") {
       try {
         const st = await rebuild(env);
-        return json({ ok: true, msg: "已刷新", state: st });
+        return json({ ok: true, msg: "Opera 凭据已刷新", stats: st.stats });
       } catch (e) {
-        return json({ ok: false, error: e.message }, 500);
+        return json({ ok: false, error: e.message || String(e) }, 500);
       }
     }
 
     if (path === "/api/reset-warp" && req.method === "POST") {
       try {
         const st = await rebuild(env, { forceWarp: true });
-        return json({ ok: true, msg: "WARP 已重注册", state: st });
+        return json({ ok: true, msg: "WARP 设备已重注册", stats: st.stats });
       } catch (e) {
-        return json({ ok: false, error: e.message }, 500);
+        return json({ ok: false, error: e.message || String(e) }, 500);
       }
     }
 
     if (path === "/api/password" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
-      if (!(await checkPassword(cred, String(body.oldPassword || "")))) {
+      if (!(await checkPassword(cred, String(body.current || body.oldPassword || "")))) {
         return json({ ok: false, error: "原密码错误" }, 401);
       }
-      const pw = String(body.newPassword || "");
-      if (pw.length < 8) return json({ ok: false, error: "新密码至少 8 位" }, 400);
-      const c = await makeCred(pw);
+      const np = String(body.password || body.newPassword || "");
+      if (np.length < 8) return json({ ok: false, error: "新密码至少 8 位" }, 400);
+      if (np !== String(body.confirm || "")) {
+        return json({ ok: false, error: "两次输入不一致" }, 400);
+      }
+      const c = await makeCred(np);
       await env.KV.put(K_CRED, JSON.stringify(c));
-      const token = await signToken(c);
-      return new Response(JSON.stringify({ ok: true, msg: "密码已改，旧链接全部失效" }), {
-        headers: {
-          "content-type": "application/json; charset=utf-8",
-          "set-cookie": `${COOKIE}=${token}; Path=/; HttpOnly; Secure; ` +
-                        `SameSite=Lax; Max-Age=${7 * 24 * 3600}`,
-        },
-      });
+      return json({ ok: true, msg: "密码已修改，请重新登录" });
     }
 
     if (path === "/api/wind/clear" && req.method === "POST") {
       await env.KV.delete(K_WIND);
       try { await rebuild(env); } catch { /* */ }
-      return json({ ok: true, msg: "已清除，重跑一次流水线拿新账号" });
+      return json({ ok: true, msg: "Windscribe 账号已清除" });
     }
 
     return notFound();
