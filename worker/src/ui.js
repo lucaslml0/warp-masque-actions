@@ -71,7 +71,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #msg{margin-top:10px;font-size:12px;min-height:18px}
 `;
 
-/** KV 没绑时的指引页。报错要能自己解决，别只丢个栈。 */
 export function renderNoKV() {
   return `<!DOCTYPE html>
 <html lang="zh-CN"><head>
@@ -101,7 +100,6 @@ export function renderNoKV() {
 </div></div></body></html>`;
 }
 
-/** 首次访问的初始化页，设管理密码。 */
 export function renderSetup() {
   return `<!DOCTYPE html>
 <html lang="zh-CN"><head>
@@ -153,7 +151,6 @@ async function go(e){
 </body></html>`;
 }
 
-/** 登录页。密码错时不提示"用户名错误"这类可枚举信息。 */
 export function renderLogin(err) {
   return `<!DOCTYPE html>
 <html lang="zh-CN"><head>
@@ -197,10 +194,20 @@ async function go(e){
 </body></html>`;
 }
 
-export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage, jk = {}, ep = {}) {
+export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage, jk = {}, ep = {}, opts = {}) {
   const s = state || {};
   const warp = s.warp || {};
   const stat = s.stats || {};
+  const free = opts.free || { enabled: false, useWarp: true, scope: "ai-streaming", protocolMode: "stable", countries: ["US","JP","SG"] };
+  const advanced = opts.advanced || { sni: "", mtu: 1280, dns: ["1.1.1.1","8.8.8.8"], network: "quic", stack: "auto", cc: "", outerCc: "", bbrProfile: "", remoteDns: true, udp: true };
+  const freeCountryList = opts.freeCountries || [
+    { code: "US", flag: "🇺🇸", name: "美国" },
+    { code: "JP", flag: "🇯🇵", name: "日本" },
+    { code: "SG", flag: "🇸🇬", name: "新加坡" },
+    { code: "HK", flag: "🇭🇰", name: "香港" },
+    { code: "TW", flag: "🇹🇼", name: "台湾" },
+    { code: "KR", flag: "🇰🇷", name: "韩国" },
+  ];
   const updated = s.updatedAt ? new Date(s.updatedAt) : null;
   const ago = updated ? Math.floor((Date.now() - updated.getTime()) / 60000) : null;
   const exp = s.expiresAt ? new Date(s.expiresAt) : null;
@@ -356,11 +363,74 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       ${ep.meta && ep.meta.mode ? row("合并模式", ep.meta.mode, "") : ""}
       <div class="note">
         内置含 WARP MASQUE IP 段 + <code>masque*.bestcf.eu.cc</code> 域名。<br>
-        本地优选后可 <b>POST</b> 到推送地址末尾加 <code>/endpoints</code> 远程提交：<br>
-        <code>POST ${pushUrl ? pushUrl+"/endpoints" : "https://你的worker/push/&lt;令牌&gt;/endpoints"}</code><br>
-        Body JSON：<code>{"endpoints":["162.159.198.1:443","masque.bestcf.eu.cc:443"],"mode":"prefer","replace":true}</code><br>
-        mode：<code>merge</code>（默认，内置+自定义）/ <code>prefer</code>（自定义优先）/ <code>only</code>（仅自定义）。
-        ${(ep.endpoints && ep.endpoints.length) ? '<br><a href="#" onclick="go(\'/api/endpoints/clear\');return false" style="color:var(--red)">清空自定义，恢复内置</a>' : ""}
+        本地优选后可 <b>POST</b> 到推送地址末尾加 <code>/endpoints</code> 远程提交。<br>
+        ${(ep.endpoints && ep.endpoints.length) ? '<a href="#" onclick="go(\'/api/endpoints/clear\');return false" style="color:var(--red)">清空自定义，恢复内置</a>' : ""}
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">免费落地节点池</div>
+      ${row("状态", free.enabled ? "已开启" : "未开启", free.enabled ? "ok" : "warn")}
+      ${free.enabled ? row("地区", free.countries.join(", "), "ok") : ""}
+      ${free.enabled ? row("范围", free.scope, "") : ""}
+      ${free.enabled ? row("经 WARP 中转", free.useWarp ? "是" : "否", free.useWarp ? "ok" : "warn") : ""}
+      <div class="note" style="margin-top:8px">
+        节点来自 <a href="https://github.com/Au1rxx/free-vpn-subscriptions" target="_blank" rel="noopener" style="color:var(--cyan)">公开免费订阅</a>，
+        经 MASQUE/WARP 中转。仅适合连通性测试，勿传敏感数据。
+      </div>
+      <div class="sub" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+        ${freeCountryList.map((c) =>
+          `<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--dim)">
+            <input type="checkbox" class="fc" value="${c.code}" ${free.countries.includes(c.code) ? "checked" : ""}>
+            ${c.flag} ${c.code}
+          </label>`).join("")}
+      </div>
+      <div class="sub" style="margin-top:10px">
+        <select id="freeScope" style="flex:1;min-width:0;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
+          <option value="ai-streaming" ${free.scope==="ai-streaming"?"selected":""}>AI + 流媒体</option>
+          <option value="ai-only" ${free.scope==="ai-only"?"selected":""}>仅 AI</option>
+          <option value="streaming-only" ${free.scope==="streaming-only"?"selected":""}>仅流媒体</option>
+          <option value="all-foreign" ${free.scope==="all-foreign"?"selected":""}>全部国外（实验）</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--dim);white-space:nowrap">
+          <input type="checkbox" id="freeUseWarp" ${free.useWarp?"checked":""}> WARP中转
+        </label>
+      </div>
+      <div class="sub" style="margin-top:10px">
+        <button onclick="saveFree(${free.enabled ? "false" : "true"})">${free.enabled ? "关闭免费落地" : "开启免费落地"}</button>
+        ${free.enabled ? `<button class="gh" onclick="saveFree(true)">保存地区/范围</button>` : ""}
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">MASQUE 高级设置</div>
+      ${row("SNI", advanced.sni || "（自动）", "")}
+      ${row("MTU", String(advanced.mtu || 1280), "")}
+      ${row("网络", advanced.network || "quic", "")}
+      ${row("IP 栈", advanced.stack || "auto", "")}
+      ${row("拥塞控制", advanced.cc || advanced.outerCc || "（默认）", "")}
+      <div class="note">一般不用改。保存后会重建订阅配置。</div>
+      <div class="pw" style="margin-top:8px">
+        <input id="advSni" placeholder="SNI 留空=自动" value="${advanced.sni || ""}">
+        <input id="advMtu" placeholder="MTU" value="${advanced.mtu || 1280}">
+        <select id="advNet" style="background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
+          <option value="quic" ${advanced.network!=="h2"?"selected":""}>QUIC/H3</option>
+          <option value="h2" ${advanced.network==="h2"?"selected":""}>H2/TCP</option>
+        </select>
+        <button onclick="saveAdv()">保存</button>
+      </div>
+      <div class="sub" style="margin-top:8px">
+        <select id="advStack" style="flex:1;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
+          <option value="auto" ${!advanced.stack||advanced.stack==="auto"?"selected":""}>stack: auto</option>
+          <option value="gvisor" ${advanced.stack==="gvisor"?"selected":""}>gvisor</option>
+          <option value="mips" ${advanced.stack==="mips"?"selected":""}>mips</option>
+        </select>
+        <select id="advCc" style="flex:1;background:rgba(0,0,0,.45);border:1px solid var(--border);color:var(--cyan);font-family:inherit;font-size:12px;padding:11px 12px">
+          <option value="" ${!advanced.cc?"selected":""}>拥塞：默认</option>
+          <option value="bbr" ${advanced.cc==="bbr"?"selected":""}>bbr</option>
+          <option value="cubic" ${advanced.cc==="cubic"?"selected":""}>cubic</option>
+          <option value="reno" ${advanced.cc==="reno"?"selected":""}>reno</option>
+        </select>
       </div>
     </div>
 
@@ -374,10 +444,6 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
         <div class="cell"><div class="n">${stat.proton || "—"}</div><div class="l">Proton 落地</div></div>
         <div class="cell"><div class="n">${stat.wind || "—"}</div><div class="l">Windscribe 落地</div></div>
       </div>
-      <div class="note">
-        每个落地和每个接入点都组合一遍，任一环失效都还有别的路走。<br>
-        节点名 <b>欧洲1@198.1-443</b> = 欧洲第 1 个落地，经 162.159.198.1:443 接入。
-      </div>
     </div>
 
     <div class="sec">
@@ -386,9 +452,7 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
              updated ? (ago > 250 ? "warn" : "ok") : "err")}
       ${row("凭据剩余", leftTxt, left === null ? "" : left <= 0 ? "warn" : "ok")}
       ${row("到期时间", fmt(exp))}
-      ${row("密码更新于", cred && cred.updatedAt ? fmt(new Date(cred.updatedAt)) : "—")}
       ${row("WARP 设备", warp.deviceId ? warp.deviceId.slice(0, 8) + "…" : "—")}
-      ${row("WARP 注册于", warp.registeredAt ? fmt(new Date(warp.registeredAt)) : "—")}
       ${row("内网地址", warp.ipv4 || "—")}
     </div>
 
@@ -398,29 +462,18 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
         <button onclick="go('/api/refresh')">刷新 Opera 凭据</button>
         <button class="gh" onclick="go('/api/reset-warp')">重注册 WARP 设备</button>
       </div>
-      <div class="note">
-        Opera 凭据 4 小时到期。<b>不用定时任务</b>——订阅被访问时才检查，
-        没过期直接给缓存，过期了才重新注册。<br>
-        想提前换一份就点刷新。<br>
-        WARP 设备信息存在 KV 里复用，<b>一般不用重注册</b>，除非 MASQUE 整体连不上。
-      </div>
     </div>
 
     <div class="sec">
       <div class="sec-t">Proton 落地</div>
       ${protonCred ? `
-      <div class="row"><span class="k">状态</span><span class="v ok">已配置 ${
-        protonCred.servers.length} 台</span></div>
-      <div class="row"><span class="k">证书剩余</span><span class="v ${
-        pLeft <= 1 ? "warn" : "ok"}">${pLeft} 天（${
-        pExp.toISOString().slice(0, 10)} 到期）</span></div>
+      <div class="row"><span class="k">状态</span><span class="v ok">已配置 ${protonCred.servers.length} 台</span></div>
+      <div class="row"><span class="k">证书剩余</span><span class="v ${pLeft <= 1 ? "warn" : "ok"}">${pLeft} 天</span></div>
       ` : `
       <div class="row"><span class="k">状态</span><span class="v warn">未配置</span></div>
       `}
       <div class="note" style="margin-top:10px">
-        推送地址（流水线用）：
-        ${pushUrl ? `<code style="word-break:break-all">${pushUrl}</code>` : "未生成"}
-        <br>
+        推送地址：${pushUrl ? `<code style="word-break:break-all">${pushUrl}</code>` : "未生成"}<br>
         <button onclick="go('/api/proton/token')" style="margin-top:8px">${pushToken ? "换一个令牌" : "生成推送令牌"}</button>
         ${protonCred ? `<button class="gh" onclick="go('/api/proton/clear')">清除 Proton</button>` : ""}
       </div>
@@ -428,16 +481,8 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
 
     <div class="sec">
       <div class="sec-t">Windscribe 落地</div>
-      ${windInfo ? `
-      ${row("状态", `已配置 ${windInfo.servers || 0} 台`, "ok")}
-      ${windUsageTxt ? row("用量", windUsageTxt, windPct > 90 ? "warn" : "ok") : ""}
-      ` : `
-      ${row("状态", s.windErr ? "失败：" + s.windErr : "未配置", s.windErr ? "err" : "warn")}
-      `}
-      <div class="sub" style="margin-top:10px">
-        ${windInfo ? `<button class="gh" onclick="go('/api/wind/clear')">清除账号</button>` : ""}
-      </div>
-      <div class="note">由 GitHub Actions 开户后 POST 到推送地址 <code>/wind</code> 后缀。</div>
+      ${windInfo ? `${row("状态", `已配置 ${windInfo.servers || 0} 台`, "ok")}${windUsageTxt ? row("用量", windUsageTxt, windPct > 90 ? "warn" : "ok") : ""}` : `${row("状态", s.windErr ? "失败：" + s.windErr : "未配置", s.windErr ? "err" : "warn")}`}
+      ${windInfo ? `<div class="sub" style="margin-top:10px"><button class="gh" onclick="go('/api/wind/clear')">清除账号</button></div>` : ""}
     </div>
 
     <div class="sec">
@@ -462,59 +507,66 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
   </div>
 </div></div>
 <script>
+function say(t,c){const m=document.getElementById('msg');if(m){m.textContent='> '+t;m.style.color=c||'var(--cyan)';}}
 function cp(id){
   const el=document.getElementById(id);
-  navigator.clipboard.writeText(el.value).then(()=>{
-    const m=document.getElementById('msg');
-    if(m){m.textContent='> 已复制';m.style.color='var(--mint)';}
-  });
+  navigator.clipboard.writeText(el.value).then(()=>say('已复制','var(--mint)'));
 }
-async function go(path){
-  const m=document.getElementById('msg');
-  const bs=[...document.querySelectorAll('button')];
+async function post(url,body,okmsg){
+  const bs=document.querySelectorAll('button');
   bs.forEach(b=>b.disabled=true);
-  if(m){m.textContent='> 处理中…';m.style.color='var(--yellow)';}
+  say('执行中…','var(--yellow)');
   try{
-    const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},
+                            body:JSON.stringify(body)});
     const j=await r.json();
-    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
-    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
-  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
+    if(j.ok){say((j.msg||okmsg)+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1400);}
+    else{say('失败: '+j.error,'var(--red)');bs.forEach(b=>b.disabled=false);}
+  }catch(e){say('失败: '+e.message,'var(--red)');bs.forEach(b=>b.disabled=false);}
 }
-async function jkToggle(on){
-  const m=document.getElementById('msg');
-  const bs=[...document.querySelectorAll('button')];
+function setPath(){
+  const v=document.getElementById('sp').value.trim();
+  if(!v){say('路径不能为空','var(--red)');return;}
+  post('/api/sub-path',{path:v},'已保存');
+}
+function saveFree(on){
+  const countries=[...document.querySelectorAll('.fc:checked')].map(x=>x.value);
+  const scope=(document.getElementById('freeScope')||{}).value||'ai-streaming';
+  const useWarp=!!(document.getElementById('freeUseWarp')||{}).checked;
+  post('/api/free-land',{enabled:!!on,countries,scope,useWarp,protocolMode:'stable'},
+       on?'免费落地已开启':'免费落地已关闭');
+}
+function saveAdv(){
+  post('/api/advanced',{
+    sni:(document.getElementById('advSni')||{}).value||'',
+    mtu:Number((document.getElementById('advMtu')||{}).value)||1280,
+    network:(document.getElementById('advNet')||{}).value||'quic',
+    stack:(document.getElementById('advStack')||{}).value||'auto',
+    cc:(document.getElementById('advCc')||{}).value||''
+  },'高级设置已保存');
+}
+function jkToggle(on){
+  post('/api/jia-kuan',{enabled:!!on}, on ? '家宽链式已开启' : '家宽链式已关闭');
+}
+function setPw(){
+  const c0=document.getElementById('op').value;
+  const c1=document.getElementById('np').value;
+  const c2=document.getElementById('cp').value;
+  if(!c0||!c1){say('把三个框都填了','var(--red)');return;}
+  if(c1!==c2){say('两次输入不一致','var(--red)');return;}
+  if(c1.length<8){say('新密码至少 8 位','var(--red)');return;}
+  post('/api/password',{current:c0,password:c1,confirm:c2},'已修改');
+}
+async function go(p){
+  const bs=document.querySelectorAll('button');
   bs.forEach(b=>b.disabled=true);
-  if(m){m.textContent='> 处理中…';m.style.color='var(--yellow)';}
+  say('执行中…','var(--yellow)');
   try{
-    const r=await fetch('/api/jia-kuan',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({enabled:!!on})});
+    const r=await fetch(p,{method:'POST'});
     const j=await r.json();
-    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
-    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
-  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
-}
-async function setPath(){
-  const m=document.getElementById('msg');
-  try{
-    const r=await fetch('/api/sub-path',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({path:document.getElementById('sp').value})});
-    const j=await r.json();
-    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
-    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}}
-  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}}
-}
-async function setPw(){
-  const m=document.getElementById('msg');
-  try{
-    const r=await fetch('/api/password',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({oldPassword:document.getElementById('op').value,
-                           newPassword:document.getElementById('np').value,
-                           confirm:document.getElementById('cp').value})});
-    const j=await r.json();
-    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}}
-    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}}
-  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}}
+    if(j.ok){say(j.msg+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1200);}
+    else{say('失败: '+j.error,'var(--red)');bs.forEach(b=>b.disabled=false);}
+  }catch(e){say('失败: '+e.message,'var(--red)');bs.forEach(b=>b.disabled=false);}
 }
 </script>
 </body></html>`;
