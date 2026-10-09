@@ -3,14 +3,8 @@
 // 和 v6 的 102/105 段 —— 它们回 QUIC 包但 login 失败。
 //
 // 端口 4443 和 8095 是后来补测出来的，4 个 v4 地址 x 这两个端口 8/8 全通。
-const V4 = ["162.159.198.1", "162.159.198.2", "162.159.199.1", "162.159.199.2"];
-const V6 = ["2606:4700:103::1", "2606:4700:103::2",
-            "2606:4700:104::1", "2606:4700:104::2"];
-const PORTS = [443, 500, 1701, 4500, 4443, 8443, 8095];
-
-// CF 没有 A 记录指向 MASQUE 段，官方域名只能用在 SNI 上
-const OFFICIAL_SNI = "zt-masque.cloudflareclient.com";
-const SNI_NODE = ["162.159.198.1", 443];
+// 优选 IP/域名见 endpoints.js；可通过 POST /push/<token>/endpoints 远程提交。
+import { mergeEndpointPairs, entryName as epName } from "./endpoints.js";
 
 const RS = "https://raw.githubusercontent.com";
 const RULESETS = [
@@ -52,8 +46,9 @@ function entryName(ip, port) {
 }
 
 function masqueNode(name, ip, port, priv, pub, v4, v6, sni) {
-  // 裸 IPv6 含冒号，YAML 里必须加引号否则被当成映射
-  const srv = ip.includes(":") ? `"${ip}"` : ip;
+  // 裸 IPv6 含冒号，YAML 里必须加引号；域名也加引号更稳妥
+  const isV6 = ip.includes(":") && !ip.includes(".");
+  const srv = (isV6 || /[a-zA-Z]/.test(ip)) ? `"${ip}"` : ip;
   const extra = sni ? `\n    sni: ${sni}` : "";
   return `  - name: ${name}
     type: masque
@@ -69,25 +64,30 @@ function masqueNode(name, ip, port, priv, pub, v4, v6, sni) {
     dns: [1.1.1.1, 2606:4700:4700::1111]`;
 }
 
-/** 生成全部 MASQUE 接入点。两种配置都用这批。 */
-function buildEntries(warp) {
+/** 生成全部 MASQUE 接入点。两种配置都用这批。
+ *  @param {object} warp
+ *  @param {{list?: string[], mode?: string}} [custom] 远程提交的优选
+ */
+function buildEntries(warp, custom) {
   const { privateKey: priv, peerPublicKey: pub, ipv4: v4, ipv6: v6 } = warp;
   const entries = [], proxies = [];
   // v4Entries 单独留一份：做 dialer-proxy 目标时只能用 IPv4，
   // 否则纯 IPv4 的机器上会直接 "network is unreachable"。
   const v4Entries = [];
-  for (const ip of [...V4, ...V6]) {
-    for (const port of PORTS) {
-      const n = entryName(ip, port);
-      entries.push(n);
-      if (!ip.includes(":")) v4Entries.push(n);
-      proxies.push(masqueNode(n, ip, port, priv, pub, v4, v6));
-    }
+  const pairs = mergeEndpointPairs(custom?.list || [], custom?.mode || "merge");
+  const usedNames = new Set();
+  for (const ep of pairs) {
+    let n = ep.label || epName(ep.host, ep.port, ep.label);
+    // 防重名
+    let base = n, i = 2;
+    while (usedNames.has(n)) { n = `${base}-${i++}`; }
+    usedNames.add(n);
+    entries.push(n);
+    const isV6 = ep.host.includes(":") && !ep.host.includes(".");
+    if (!isV6) v4Entries.push(n);
+    const sni = ep.sni || (ep.kind === "domain" ? ep.host : null);
+    proxies.push(masqueNode(n, ep.host, ep.port, priv, pub, v4, v6, sni));
   }
-  entries.push("官方域名");
-  v4Entries.push("官方域名");   // 官方域名节点本身连的是 IPv4
-  proxies.push(masqueNode("官方域名", SNI_NODE[0], SNI_NODE[1],
-                          priv, pub, v4, v6, OFFICIAL_SNI));
   return { entries, proxies, v4Entries };
 }
 
@@ -314,8 +314,8 @@ ${p(picks)}
       - ♻️ 自动选择`;
 }
 
-export function buildConfig(warp, opera, proton, wind) {
-  const { entries, proxies, v4Entries } = buildEntries(warp);
+export function buildConfig(warp, opera, proton, wind, custom) {
+  const { entries, proxies, v4Entries } = buildEntries(warp, custom);
 
   // 笛卡尔积：任一接入点或任一落地失效，其他组合仍可用
   const byLoc = {};
