@@ -3,11 +3,13 @@
 一键生成 Cloudflare WARP 的 mihomo 配置，57 个节点，跑在 GitHub Actions 上。
 不用自己装环境，不用服务器。
 
-仓库里有两条流水线：
+仓库里有几条流水线：
 
 - **生成 WARP MASQUE 配置** — 纯 WARP，57 个节点。下面讲的就是这条。
 - **Opera over MASQUE（套娃）** — 在 WARP 外面再叠一层 Opera VPN 落地，
   换个出口国家。见文末[套娃那条](#套娃opera-vpn-叠在-warp-上)。
+- **家宽链式 over MASQUE** — WARP MASQUE 作前置，落地换成 VPN Gate
+  志愿者共享的家庭宽带，出网是住宅 IP。见[家宽链式](#家宽链式over-masque)。
 
 另外 `worker/` 目录是套娃那条的 Worker 版本，部署到 Cloudflare 上自己每 4 小时
 更新，带个状态页。见[跑在 Worker 上](#跑在-worker-上)。
@@ -247,6 +249,45 @@ Shadowrocket、Stash 不认 `dialer-proxy`，用不了套娃配置——
 
 `scripts/gen_opera_masque.py`。接入点清单和纯 WARP 那份是同一批
 （`V4` / `V6` / `PORTS`），`REGIONS` 控制取哪些 Opera 大区。
+
+---
+
+## 家宽链式 over MASQUE
+
+本机 → MASQUE 接入点 → VPN Gate 住宅 OpenVPN → 目标。
+
+思路来自 [cfnew](https://github.com/lucaslml0/cfnew) 的「家宽链式」：
+用 CF / WARP 当前置把握手特征藏起来，落地换成网友共享的家庭宽带，
+出网就是住宅 IP（日本、韩国居多），不是机房段。
+
+节点取自 [VPN Gate](https://www.vpngate.net/cn/) 公开清单，只保留 TCP
+协议的志愿者家宽，官方机房段（`public-vpn*` / `219.100.37.*`）会丢掉。
+
+### 怎么跑
+
+Actions 里选 `家宽链式 over MASQUE`，点 Run workflow。
+
+跑完配置有两个地方：仓库里的 `configs/jia-kuan-masque.yaml`（流水线自动提交回来），
+以及 artifact `jia-kuan-masque`。
+
+### 分组说明
+
+- **⚡ MASQUE前置** — 全部 MASQUE 接入点做成 url-test，家宽节点统一经它出站
+- **🏠 家宽自动** — fallback 组，按速度排序，挂了会自己往下换
+- **🏠 家宽节点** — 按国家排好的手选列表
+- **🚀 节点选择** — 默认入口，可在自动 / 手选 / 纯 MASQUE 前置之间切
+
+### 客户端要求
+
+需要 mihomo 内核（`openvpn` outbound + `dialer-proxy`）。
+家宽节点掉线很正常，别盯着单条延迟；用「🏠 家宽自动」即可。
+
+Shadowrocket、Stash 等不认 `dialer-proxy` 的客户端用不了这条。
+
+### 改配置
+
+`scripts/gen_jia_kuan.py`。`MAX_LANDINGS` 控制最多保留多少条家宽落地
+（默认 40，按速度倒序）。接入点清单与纯 WARP / Opera 套娃共用同一批。
 
 ---
 
