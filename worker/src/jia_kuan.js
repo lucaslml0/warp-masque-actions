@@ -5,12 +5,7 @@
 //
 // 缓存 30 分钟：节点掉线正常，拉太勤也没用。
 
-const V4 = ["162.159.198.1", "162.159.198.2", "162.159.199.1", "162.159.199.2"];
-const V6 = ["2606:4700:103::1", "2606:4700:103::2",
-            "2606:4700:104::1", "2606:4700:104::2"];
-const PORTS = [443, 500, 1701, 4500, 4443, 8443, 8095];
-const OFFICIAL_SNI = "zt-masque.cloudflareclient.com";
-const SNI_NODE = ["162.159.198.1", 443];
+import { mergeEndpointPairs, entryName as epName } from "./endpoints.js";
 
 const VPNGATE_URLS = [
   "https://www.vpngate.net/api/iphone/",
@@ -35,7 +30,8 @@ function entryName(ip, port) {
 }
 
 function masqueNode(name, ip, port, priv, pub, v4, v6, sni) {
-  const srv = ip.includes(":") ? `"${ip}"` : ip;
+  const isV6 = ip.includes(":") && !ip.includes(".");
+  const srv = (isV6 || /[a-zA-Z]/.test(ip)) ? `"${ip}"` : ip;
   const extra = sni ? `\n    sni: ${sni}` : "";
   return `  - name: ${name}
     type: masque
@@ -59,13 +55,15 @@ function b64decode(s) {
   return new TextDecoder().decode(bytes);
 }
 
-function directive(text, name) {
-  const m = text.match(new RegExp("^[ \\t]*" + name + "[ \\t]+(.+?)[ \\t]*$", "m"));
+function ovpnDirective(text, name) {
+  const re = new RegExp(`^[ \\t]*${name}[ \\t]+(.+?)[ \\t]*$`, "m");
+  const m = text.match(re);
   return m ? m[1].trim() : "";
 }
 
-function block(text, tag) {
-  const m = text.match(new RegExp("<" + tag + ">([\\s\\S]*?)</" + tag + ">"));
+function ovpnBlock(text, tag) {
+  const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`);
+  const m = text.match(re);
   return m ? m[1].trim() : "";
 }
 
@@ -75,113 +73,105 @@ function decodeOvpn(configB64, full = false) {
   return b64decode(clean.slice(0, OVPN_HEAD_LEN));
 }
 
-function indentCert(text, spaces) {
-  return text.split("\n").map((l) => l.trim()).filter(Boolean)
-    .map((l) => spaces + l).join("\n");
+async function fetchText(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0", Accept: "text/plain" },
+  });
+  if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
+  return await res.text();
 }
 
-function q(s) {
-  return JSON.stringify(String(s == null ? "" : s));
-}
-
-/** 拉 VPN Gate 清单并解析出住宅 TCP 节点 + 共用证书。 */
-export async function fetchJiaKuanNodes() {
+async function fetchJiaKuanNodes() {
   const now = Date.now();
   if (_cache && now - _cacheAt < CACHE_MS) return _cache;
 
-  let text = "";
-  let lastErr = null;
+  let body = null, lastErr = null;
   for (const url of VPNGATE_URLS) {
     try {
-      const resp = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0", Accept: "text/plain" },
-        cf: { cacheTtl: 1800, cacheEverything: true },
-      });
-      if (!resp.ok) {
-        lastErr = new Error("节点源返回 " + resp.status);
-        continue;
-      }
-      text = await resp.text();
-      if (text && text.includes("OpenVPN_ConfigData_Base64")) break;
-      lastErr = new Error("节点源内容异常");
-      text = "";
+      body = await fetchText(url);
+      if (body && body.includes("OpenVPN_ConfigData_Base64")) break;
+      lastErr = new Error(`${url} bad response`);
+      body = null;
     } catch (e) {
       lastErr = e;
+      body = null;
     }
   }
-  if (!text) throw lastErr || new Error("节点源没有返回内容");
+  if (!body) throw new Error("VPN Gate 节点源拉不到: " + (lastErr && lastErr.message));
 
   const candidates = [];
-  for (const raw of text.split("\n")) {
+  for (const raw of body.split("\n")) {
     const line = raw.trim();
     if (!line || line[0] === "*" || line[0] === "#") continue;
     const fields = line.split(",");
     if (fields.length < 15) continue;
     const hostname = fields[0] || "";
     const ip = fields[1] || "";
-    if (hostname.startsWith(DC_HOSTNAME_PREFIX)) continue;
-    if (ip.startsWith(DC_IP_PREFIX)) continue;
+    if (hostname.startsWith(DC_HOSTNAME_PREFIX) || ip.startsWith(DC_IP_PREFIX)) continue;
     const configB64 = fields[fields.length - 1];
     if (!configB64 || configB64.length < 100) continue;
-    candidates.push({
-      country: (fields[6] || "XX").toUpperCase(),
-      speed: parseInt(fields[4], 10) || 0,
-      configB64,
-    });
+    let speed = 0;
+    try { speed = parseInt(fields[4], 10) || 0; } catch { speed = 0; }
+    candidates.push({ country: (fields[6] || "XX").toUpperCase(), speed, configB64 });
   }
   candidates.sort((a, b) => b.speed - a.speed);
 
   const nodes = [];
   let certs = null;
   for (const item of candidates) {
-    let cfg = "";
+    let cfg;
     try {
       cfg = decodeOvpn(item.configB64);
-      if (!directive(cfg, "remote")) cfg = decodeOvpn(item.configB64, true);
-    } catch {
-      continue;
-    }
-    if ((directive(cfg, "proto") || "tcp").toLowerCase() !== "tcp") continue;
-    const remote = directive(cfg, "remote").split(/\s+/);
+      if (!ovpnDirective(cfg, "remote")) cfg = decodeOvpn(item.configB64, true);
+    } catch { continue; }
+    if ((ovpnDirective(cfg, "proto") || "tcp").toLowerCase() !== "tcp") continue;
+    const remote = ovpnDirective(cfg, "remote").split(/\s+/);
     if (!remote[0]) continue;
-
     if (!certs) {
       try {
         const full = decodeOvpn(item.configB64, true);
-        const ca = block(full, "ca");
-        const cert = block(full, "cert");
-        const key = block(full, "key");
+        const ca = ovpnBlock(full, "ca");
+        const cert = ovpnBlock(full, "cert");
+        const key = ovpnBlock(full, "key");
         if (ca && cert && key) certs = { ca, cert, key };
       } catch { /* skip */ }
       if (!certs) continue;
     }
-
+    let port = 443;
+    try { if (remote[1]) port = parseInt(remote[1], 10) || 443; } catch { port = 443; }
     nodes.push({
       country: item.country,
       server: remote[0],
-      port: parseInt(remote[1], 10) || 443,
-      cipher: directive(cfg, "cipher") || "AES-128-CBC",
-      auth: directive(cfg, "auth") || "SHA1",
+      port,
+      cipher: ovpnDirective(cfg, "cipher") || "AES-128-CBC",
+      auth: ovpnDirective(cfg, "auth") || "SHA1",
       speed: item.speed,
     });
     if (nodes.length >= MAX_LANDINGS) break;
   }
-
-  if (!nodes.length || !certs) {
-    throw new Error("没解析出能用的家宽节点（需要 TCP + 完整证书）");
-  }
+  if (!nodes.length || !certs) throw new Error("没解析出能用的家宽节点（需要 TCP + 完整证书）");
 
   _cache = { nodes, certs };
   _cacheAt = now;
   return _cache;
 }
 
+function q(s) { return JSON.stringify(String(s)); }
+
+function indentCert(text, spaces) {
+  return text.split("\n").map((ln) => {
+    const t = ln.trim();
+    return t ? spaces + t : "";
+  }).filter(Boolean).join("\n");
+}
+
 /**
  * 生成家宽专属订阅 YAML。
- * @param {object} warp  usque 风格设备信息（privateKey / peerPublicKey / ipv4 / ipv6）
+ * @param {object} warp  usque 风格设备信息（privateKey / publicKey / ipv4 / ipv6）
+ * @param {{list?: string[], mode?: string}} [custom] 远程提交的优选接入点
  * @returns {Promise<{ yaml: string, landings: number, entries: number }>}
  */
-export async function buildJiaKuanConfig(warp) {
+export async function buildJiaKuanConfig(warp, custom) {
   const { nodes, certs } = await fetchJiaKuanNodes();
   const priv = warp.privateKey;
   const pub = warp.peerPublicKey || warp.publicKey;
@@ -190,15 +180,17 @@ export async function buildJiaKuanConfig(warp) {
 
   const entries = [];
   const proxies = [];
-  for (const ip of [...V4, ...V6]) {
-    for (const port of PORTS) {
-      const n = entryName(ip, port);
-      entries.push(n);
-      proxies.push(masqueNode(n, ip, port, priv, pub, v4, v6, null));
-    }
+  const pairs = mergeEndpointPairs(custom?.list || [], custom?.mode || "merge");
+  const usedNames = new Set();
+  for (const ep of pairs) {
+    let n = ep.label || epName(ep.host, ep.port, ep.label);
+    let base = n, i = 2;
+    while (usedNames.has(n)) { n = `${base}-${i++}`; }
+    usedNames.add(n);
+    entries.push(n);
+    const sni = ep.sni || (ep.kind === "domain" ? ep.host : null);
+    proxies.push(masqueNode(n, ep.host, ep.port, priv, pub, v4, v6, sni));
   }
-  entries.push("官方域名");
-  proxies.push(masqueNode("官方域名", SNI_NODE[0], SNI_NODE[1], priv, pub, v4, v6, OFFICIAL_SNI));
 
   const frontGroup = "⚡ MASQUE前置";
   const countryCount = {};
@@ -234,19 +226,16 @@ export async function buildJiaKuanConfig(warp) {
   });
 
   const byCountry = landingNames
-    .map((n, i) => ({ n, c: nodes[i].country }))
-    .sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0))
-    .map((x) => x.n);
+    .map((n, i) => [n, nodes[i]])
+    .sort((a, b) => a[1].country.localeCompare(b[1].country));
+  const countryOrder = byCountry.map((x) => x[0]);
 
-  const list = (arr, indent = 6) =>
-    arr.map((x) => " ".repeat(indent) + `- ${q(x)}`).join("\n");
-  const plain = (arr, indent = 6) =>
-    arr.map((x) => " ".repeat(indent) + `- ${x}`).join("\n");
+  const list = (arr, n = 6) => arr.map((x) => " ".repeat(n) + "- " + q(x)).join("\n");
+  const plain = (arr, n = 6) => arr.map((x) => " ".repeat(n) + "- " + x).join("\n");
 
   const yaml = `# 家宽链式 over Cloudflare WARP (MASQUE)
-# 链路: 本机 -> MASQUE 前置 -> VPN Gate 住宅 OpenVPN -> 目标
-# 前置 ${entries.length} 个；家宽落地 ${nodes.length} 个
-# 节点是网友共享的，掉线正常。「🏠 家宽自动」会按速度往下换。
+# 链路: 本机 -> MASQUE -> VPN Gate 住宅 OpenVPN -> 目标
+# 前置 ${entries.length} 个 MASQUE；家宽落地 ${nodes.length} 个
 # 需要 mihomo（openvpn + dialer-proxy）
 
 mixed-port: 7890
@@ -290,7 +279,7 @@ ${list(landingNames)}
   - name: "🏠 家宽节点"
     type: select
     proxies:
-${list(byCountry)}
+${list(countryOrder)}
 
   - name: 🚀 节点选择
     type: select
@@ -308,7 +297,7 @@ ${list(byCountry)}
 
 rules:
   - GEOIP,LAN,🎯 全球直连,no-resolve
-  - GEOIP,CN,🎯 全球直连,no-resolve
+  - GEOIP,CN,🎯 全球直连
   - MATCH,🚀 节点选择
 `;
 
