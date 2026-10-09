@@ -8,6 +8,7 @@
 import { mergeEndpointPairs, entryName as epName } from "./endpoints.js";
 
 const VPNGATE_URLS = [
+  "https://lucaslml0.github.io/gate/api.txt",
   "https://www.vpngate.net/api/iphone/",
   "http://www.vpngate.net/api/iphone/",
 ];
