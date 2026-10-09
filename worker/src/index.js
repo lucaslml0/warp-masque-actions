@@ -58,36 +58,16 @@ const html = (body, s = 200) =>
 
 const notFound = () => new Response("Not Found", { status: 404 });
 
-function defaultAdvanced() {
-  return {
-    sni: "",
-    mtu: 1280,
-    dns: ["1.1.1.1", "8.8.8.8", "2606:4700:4700::1111", "2001:4860:4860::8888"],
-    network: "quic",
-    stack: "auto",
-    cc: "",
-    outerCc: "",
-    bbrProfile: "",
-    remoteDns: true,
-    udp: true,
-  };
-}
-
 async function getSettings(env) {
   const s = (await env.KV.get(K_SET, "json")) || {};
   const free = { ...defaultFreeSettings(), ...(s.free || {}) };
   if (!Array.isArray(free.countries) || !free.countries.length) {
     free.countries = defaultFreeSettings().countries;
   }
-  const advanced = { ...defaultAdvanced(), ...(s.advanced || {}) };
-  if (!Array.isArray(advanced.dns) || !advanced.dns.length) {
-    advanced.dns = defaultAdvanced().dns;
-  }
   return {
     subPath: s.subPath || DEFAULT_SUB,
     jkEnabled: !!s.jkEnabled,
     free,
-    advanced,
   };
 }
 
@@ -159,7 +139,7 @@ async function rebuild(env, { forceWarp = false } = {}) {
   const { yaml, entries, landings, combos, proton: pn, wind: wn, free: fn } =
     buildConfig(warp, opera, proton, wind,
       { list: custom.list, mode: custom.meta.mode || "merge" },
-      { free: settings.free, advanced: settings.advanced });
+      { free: settings.free });
 
   const now = Date.now();
   const state = {
@@ -448,7 +428,7 @@ export default {
                            pushToken, protonCred, windUsage,
                            { jkEnabled: settings.jkEnabled, jkMeta },
                            { endpoints: epCustom.list, meta: epCustom.meta },
-                           { free: settings.free, advanced: settings.advanced,
+                           { free: settings.free,
                              freeCountries: FREE_COUNTRIES }));
     }
 
@@ -544,44 +524,6 @@ export default {
           : "免费落地已关闭", free });
       } catch (e) {
         return json({ ok: true, msg: "已保存，但重建失败：" + e.message, free });
-      }
-    }
-
-    if (path === "/api/advanced" && req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      const adv = { ...settings.advanced };
-      if (body.sni !== undefined) adv.sni = String(body.sni || "").trim();
-      if (body.mtu !== undefined) {
-        const m = Number(body.mtu);
-        if (m >= 576 && m <= 1500) adv.mtu = m;
-      }
-      if (body.dns !== undefined) {
-        const list = Array.isArray(body.dns)
-          ? body.dns
-          : String(body.dns || "").split(/[,\s]+/);
-        adv.dns = list.map((x) => String(x).trim()).filter(Boolean).slice(0, 8);
-        if (!adv.dns.length) adv.dns = defaultAdvanced().dns;
-      }
-      if (["quic", "h2"].includes(body.network)) adv.network = body.network;
-      if (["auto", "gvisor", "mips"].includes(body.stack)) adv.stack = body.stack;
-      if (body.cc !== undefined) {
-        adv.cc = ["", "cubic", "reno", "bbr", "bbr3"].includes(body.cc) ? body.cc : adv.cc;
-      }
-      if (body.outerCc !== undefined) {
-        adv.outerCc = ["", "bbr"].includes(body.outerCc) ? body.outerCc : adv.outerCc;
-      }
-      if (body.bbrProfile !== undefined) {
-        adv.bbrProfile = ["", "standard", "conservative", "aggressive"].includes(body.bbrProfile)
-          ? body.bbrProfile : adv.bbrProfile;
-      }
-      if (body.remoteDns !== undefined) adv.remoteDns = !!body.remoteDns;
-      if (body.udp !== undefined) adv.udp = !!body.udp;
-      await env.KV.put(K_SET, JSON.stringify({ ...settings, advanced: adv }));
-      try {
-        await rebuild(env);
-        return json({ ok: true, msg: "MASQUE 高级设置已保存并重建配置", advanced: adv });
-      } catch (e) {
-        return json({ ok: true, msg: "已保存，但重建失败：" + e.message, advanced: adv });
       }
     }
 
