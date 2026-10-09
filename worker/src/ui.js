@@ -197,7 +197,7 @@ async function go(e){
 </body></html>`;
 }
 
-export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage, jk = {}) {
+export function renderUI(state, host, sp, token, cred, pushToken, protonCred, windUsage, jk = {}, ep = {}) {
   const s = state || {};
   const warp = s.warp || {};
   const stat = s.stats || {};
@@ -349,6 +349,22 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
     </div>
 
     <div class="sec">
+      <div class="sec-t">优选接入点</div>
+      ${row("自定义条数", (ep.endpoints && ep.endpoints.length) ? String(ep.endpoints.length) : "0（仅内置）",
+             (ep.endpoints && ep.endpoints.length) ? "ok" : "")}
+      ${ep.meta && ep.meta.updatedAt ? row("最近提交", ep.meta.updatedAt.replace("T"," ").slice(0,19)+" UTC", "ok") : ""}
+      ${ep.meta && ep.meta.mode ? row("合并模式", ep.meta.mode, "") : ""}
+      <div class="note">
+        内置含 WARP MASQUE IP 段 + <code>masque*.bestcf.eu.cc</code> 域名。<br>
+        本地优选后可 <b>POST</b> 到推送地址末尾加 <code>/endpoints</code> 远程提交：<br>
+        <code>POST ${pushUrl ? pushUrl+"/endpoints" : "https://你的worker/push/&lt;令牌&gt;/endpoints"}</code><br>
+        Body JSON：<code>{"endpoints":["162.159.198.1:443","masque.bestcf.eu.cc:443"],"mode":"prefer","replace":true}</code><br>
+        mode：<code>merge</code>（默认，内置+自定义）/ <code>prefer</code>（自定义优先）/ <code>only</code>（仅自定义）。
+        ${(ep.endpoints && ep.endpoints.length) ? '<br><a href="#" onclick="go(\'/api/endpoints/clear\');return false" style="color:var(--red)">清空自定义，恢复内置</a>' : ""}
+      </div>
+    </div>
+
+    <div class="sec">
       <div class="sec-t">节点</div>
       <div class="grid">
         <div class="cell"><div class="n">${stat.combos ?? "—"}</div><div class="l">组合节点</div></div>
@@ -401,131 +417,104 @@ export function renderUI(state, host, sp, token, cred, pushToken, protonCred, wi
       ` : `
       <div class="row"><span class="k">状态</span><span class="v warn">未配置</span></div>
       `}
-      <div class="note" style="margin-bottom:10px">
-        Proton 要账号登录，Worker 里做会被风控拦，所以走 GitHub Actions 取证书再推过来。
-        证书<b>最长 7 天</b>，到期重跑一次流水线即可。
-      </div>
-      <div class="sub">
-        <input id="pu" value="${pushUrl || "点右边生成"}" readonly>
-        <button onclick="cp('pu')">复制</button>
-        <button class="gh" onclick="go('/api/proton/token')">${
-          pushToken ? "换一个" : "生成"}</button>
-      </div>
-      <div class="note">
-        把这个地址填进 GitHub 仓库 Secrets 的 <b>WORKER_PUSH_URL</b>，就这一个。<br>
-        然后跑 <b>取 Proton 凭据</b> 流水线，之后每 3 天自动续，不用再管。<br>
-        <b>取 Windscribe 账号</b> 那条也用同一个地址，它会自己在末尾加 <code>/wind</code>。<br>
-        地址里带令牌，只能写 Proton 凭据、动不了管理页；泄露了点「换一个」。
-        ${protonCred ? '<br><a href="#" onclick="go(\'/api/proton/clear\');return false" ' +
-          'style="color:var(--red)">清除 Proton 凭据</a>' : ""}
+      <div class="note" style="margin-top:10px">
+        推送地址（流水线用）：
+        ${pushUrl ? `<code style="word-break:break-all">${pushUrl}</code>` : "未生成"}
+        <br>
+        <button onclick="go('/api/proton/token')" style="margin-top:8px">${pushToken ? "换一个令牌" : "生成推送令牌"}</button>
+        ${protonCred ? `<button class="gh" onclick="go('/api/proton/clear')">清除 Proton</button>` : ""}
       </div>
     </div>
 
     <div class="sec">
       <div class="sec-t">Windscribe 落地</div>
       ${windInfo ? `
-      <div class="row"><span class="k">状态</span><span class="v ok">已注册 ${
-        windInfo.servers} 台</span></div>
-      <div class="row"><span class="k">账号</span><span class="v">${windInfo.userId}</span></div>
-      ${windUsageTxt ? `<div class="row"><span class="k">本月流量</span><span class="v ${
-        windPct > 90 ? "warn" : "ok"}">${windUsageTxt}</span></div>` : ""}
+      ${row("状态", `已配置 ${windInfo.servers || 0} 台`, "ok")}
+      ${windUsageTxt ? row("用量", windUsageTxt, windPct > 90 ? "warn" : "ok") : ""}
       ` : `
-      <div class="row"><span class="k">状态</span><span class="v warn">未启用</span></div>
+      ${row("状态", s.windErr ? "失败：" + s.windErr : "未配置", s.windErr ? "err" : "warn")}
       `}
-      <div class="note">
-        免费 2GB/月。开户要干净 IP，所以走 GitHub Actions，Worker 只收结果。<br>
-        和 Proton 共用同一个推送地址（末尾加 <code>/wind</code>）。
-        ${windInfo ? '<br><a href="#" onclick="go(\'/api/wind/clear\');return false" style="color:var(--red)">清除账号（换号请重跑流水线）</a>' : ""}
+      <div class="sub" style="margin-top:10px">
+        ${windInfo ? `<button class="gh" onclick="go('/api/wind/clear')">清除账号</button>` : ""}
       </div>
+      <div class="note">由 GitHub Actions 开户后 POST 到推送地址 <code>/wind</code> 后缀。</div>
     </div>
 
     <div class="sec">
       <div class="sec-t">订阅路径</div>
       <div class="sub">
-        <input id="sp" value="${sp.replace(/^\//, "")}" placeholder="sub">
-        <button onclick="setPath()">保存</button>
+        <input id="sp" value="${sp.replace(/^\//,"")}" placeholder="sub">
+        <button onclick="setPath()">修改</button>
       </div>
-      <div class="note">只能用字母数字和 - _，改完订阅链接会变。</div>
     </div>
 
     <div class="sec">
-      <div class="sec-t">修改密码</div>
+      <div class="sec-t">改密码</div>
       <div class="pw">
-        <input type="password" id="c0" placeholder="当前密码" autocomplete="current-password">
-        <input type="password" id="c1" placeholder="新密码 (>= 8)" autocomplete="new-password">
-        <input type="password" id="c2" placeholder="再输一次" autocomplete="new-password">
-        <button onclick="setPw()">修改</button>
-      </div>
-      <div class="note">改完所有旧订阅链接立刻失效，需要重新复制。</div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-t">须知</div>
-      <div class="note">
-        订阅链接里的 token 就是访问凭证，<b>别外传</b>，泄露了改密码即可全部失效。<br>
-        配置里的 private-key 等同 WARP 账号凭据。<br>
-        免费代理的流量对提供方可见，别走支付和敏感数据。
+        <input type="password" id="op" placeholder="原密码" autocomplete="current-password">
+        <input type="password" id="np" placeholder="新密码" autocomplete="new-password">
+        <input type="password" id="cp" placeholder="确认" autocomplete="new-password">
+        <button onclick="setPw()">提交</button>
       </div>
     </div>
 
-  </div></div>
-  <div class="foot">
-    Cloudflare Worker ・
-    <a href="https://github.com/byJoey/warp-masque-actions">GitHub</a> ・
-    <a href="https://joeyblog.net">Blog</a>
+    <div class="foot">OPERA // MASQUE · <a href="https://github.com/lucaslml0/warp-masque-actions" target="_blank" rel="noopener">GitHub</a></div>
   </div>
-</div>
+</div></div>
 <script>
 function cp(id){
-  const el=document.getElementById(id||'u');
-  navigator.clipboard.writeText(el.value).then(
-    ()=>say('已复制到剪贴板','var(--mint)'),
-    ()=>{el.select();document.execCommand('copy');say('已复制','var(--mint)')});
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const m=document.getElementById('msg');
+    if(m){m.textContent='> 已复制';m.style.color='var(--mint)';}
+  });
 }
-function say(t,c){
+async function go(path){
   const m=document.getElementById('msg');
-  m.textContent='> '+t; m.style.color=c;
-  setTimeout(()=>{m.textContent=''},4000);
-}
-async function post(url,body,okmsg){
-  const bs=document.querySelectorAll('button');
+  const bs=[...document.querySelectorAll('button')];
   bs.forEach(b=>b.disabled=true);
-  say('执行中…','var(--yellow)');
+  if(m){m.textContent='> 处理中…';m.style.color='var(--yellow)';}
   try{
-    const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},
-                            body:JSON.stringify(body)});
+    const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
     const j=await r.json();
-    if(j.ok){say((j.msg||okmsg)+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1400);}
-    else{say('失败: '+j.error,'var(--red)');bs.forEach(b=>b.disabled=false);}
-  }catch(e){say('失败: '+e.message,'var(--red)');bs.forEach(b=>b.disabled=false);}
+    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
+    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
+  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
 }
-function setPath(id){
-  const v=document.getElementById(id||'sp').value.trim();
-  if(!v){say('路径不能为空','var(--red)');return;}
-  post('/api/sub-path',{path:v},'已保存');
-}
-function jkToggle(on){
-  post('/api/jia-kuan',{enabled:!!on}, on ? '家宽链式已开启' : '家宽链式已关闭');
-}
-function setPw(){
-  const c0=document.getElementById('c0').value;
-  const c1=document.getElementById('c1').value;
-  const c2=document.getElementById('c2').value;
-  if(!c0||!c1){say('把三个框都填了','var(--red)');return;}
-  if(c1!==c2){say('两次输入不一致','var(--red)');return;}
-  if(c1.length<8){say('新密码至少 8 位','var(--red)');return;}
-  post('/api/password',{current:c0,password:c1,confirm:c2},'已修改');
-}
-async function go(p){
-  const bs=document.querySelectorAll('button');
+async function jkToggle(on){
+  const m=document.getElementById('msg');
+  const bs=[...document.querySelectorAll('button')];
   bs.forEach(b=>b.disabled=true);
-  say('执行中…','var(--yellow)');
+  if(m){m.textContent='> 处理中…';m.style.color='var(--yellow)';}
   try{
-    const r=await fetch(p,{method:'POST'});
+    const r=await fetch('/api/jia-kuan',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({enabled:!!on})});
     const j=await r.json();
-    if(j.ok){say((j.msg||'完成')+'，即将刷新','var(--mint)');setTimeout(()=>location.reload(),1400);}
-    else{say('失败: '+j.error,'var(--red)');bs.forEach(b=>b.disabled=false);}
-  }catch(e){say('失败: '+e.message,'var(--red)');bs.forEach(b=>b.disabled=false);}
+    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
+    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
+  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}bs.forEach(b=>b.disabled=false);}
+}
+async function setPath(){
+  const m=document.getElementById('msg');
+  try{
+    const r=await fetch('/api/sub-path',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({path:document.getElementById('sp').value})});
+    const j=await r.json();
+    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}setTimeout(()=>location.reload(),600);}
+    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}}
+  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}}
+}
+async function setPw(){
+  const m=document.getElementById('msg');
+  try{
+    const r=await fetch('/api/password',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({oldPassword:document.getElementById('op').value,
+                           newPassword:document.getElementById('np').value,
+                           confirm:document.getElementById('cp').value})});
+    const j=await r.json();
+    if(j.ok){if(m){m.textContent='> '+(j.msg||'完成');m.style.color='var(--mint)';}}
+    else{if(m){m.textContent='> '+(j.error||'失败');m.style.color='var(--red)';}}
+  }catch(e){if(m){m.textContent='> '+e.message;m.style.color='var(--red)';}}
 }
 </script>
 </body></html>`;
