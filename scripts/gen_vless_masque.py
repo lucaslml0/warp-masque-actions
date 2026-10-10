@@ -91,8 +91,9 @@ def parse_vless(uri, index):
         if security == "reality":
             pbk = get("pbk", "public-key")
             sid = get("sid", "short-id")
-            if pbk:
-                node["reality-opts"] = {"public-key": pbk, **({"short-id": sid} if sid else {})}
+            if not pbk:
+                return None
+            node["reality-opts"] = {"public-key": pbk, **({"short-id": sid} if sid else {})}
         elif security not in ("none", "tls", ""):
             # Unsupported transport security is safer to skip than to silently misconfigure.
             return None
