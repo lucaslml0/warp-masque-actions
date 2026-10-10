@@ -43,14 +43,18 @@ jobs:
           chmod +x usque
 
       - name: 注册 WARP 设备
+        env:
+          DEVICE_NAME: ${{ inputs.device_name || 'gh-actions' }}
         run: |
           set -euo pipefail
-          ./usque register -a -n "${{ inputs.device_name || 'gh-actions' }}"
+          ./usque register -a -n "$DEVICE_NAME"
           test -s config.json
           python3 -c "import json; c=json.load(open('config.json')); print('WARP device registered; endpoint IPv4:', c.get('endpoint_v4'))"
 
       - name: 生成 VLESS 套娃配置
-        run: python3 scripts/gen_vless_masque.py config.json "${{ inputs.source_url || 'https://lucaslml0.github.io/gate/jiedian.txt' }}" dist
+        env:
+          SOURCE_URL: ${{ inputs.source_url || 'https://lucaslml0.github.io/gate/jiedian.txt' }}
+        run: python3 scripts/gen_vless_masque.py config.json "$SOURCE_URL" dist
 
       - name: 校验配置可加载
         run: |
