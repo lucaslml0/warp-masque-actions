@@ -518,3 +518,23 @@ Windscribe 的浏览器扩展用的是标准 HTTPS 代理，和 Opera 同一个�
 
 注册不需要邮箱，免费额度每月约 2GB。流水线在 GitHub runner 上开户后推送到 Worker。
 配置方式与 Proton 类似：管理页生成推送地址，Actions 写入 `WORKER_PUSH_URL` 后跑 Windscribe 流水线。
+
+
+---
+
+## VLESS 落地 over MASQUE（套娃）
+
+新增工作流 **VLESS 落地 over MASQUE（套娃）**：从 `https://lucaslml0.github.io/gate/jiedian.txt` 获取 VLESS URI，把每个 VLESS 落地与 WARP MASQUE 接入点组合。
+
+链路：`客户端 → WARP MASQUE → VLESS 落地 → 目标`
+
+### 使用方法
+
+1. 打开 GitHub Actions，运行 **VLESS 落地 over MASQUE（套娃）**。
+2. 默认节点源是 `https://lucaslml0.github.io/gate/jiedian.txt`；也可在 `source_url` 输入参数中替换为其他 VLESS URI 文本源。
+3. 工作流会注册 WARP 设备、生成配置并用 mihomo Alpha 执行语法检查。
+4. 成功后可从 Artifact 下载 `vless-masque.yaml`；默认也会提交到 `configs/vless-masque.yaml`，取消 `commit` 可关闭自动提交。
+
+脚本识别常见的 `vless://` URI（TLS、Reality、WS、gRPC 等常见参数），过滤无法识别的条目，并将每个 VLESS 节点分别绑定到 MASQUE 接入点。组合数约为「有效 VLESS 落地数 × MASQUE 接入点数」。
+
+**注意：** `mihomo -t` 只验证配置能否解析，不代表 VLESS 或 MASQUE 链路实际可用。VLESS 节点会过期或失效，源列表格式变化也可能导致解析不到节点；请在 Actions 日志中检查识别数量。配置包含 WARP 私钥，因此工作流 Artifact 只上传生成的 YAML，不上传原始 `usque-config.json`。
