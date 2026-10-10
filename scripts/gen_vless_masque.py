@@ -152,11 +152,25 @@ def build(cfg, landings):
     front.append(masque_node("官方域名", "162.159.198.1", 443, priv, pub, v4, v6, OFFICIAL_SNI))
 
     # One VLESS proxy per landing x MASQUE endpoint, each pinned to one front hop.
+    # Source subscriptions commonly contain duplicate display names (e.g. "United").
+    # Make landing labels unique before deriving proxy and proxy-group names.
     proxies = list(front)
     groups_by_landing = {}
+    label_counts = {}
+    used_group_names = set()
     for idx, landing in enumerate(landings, 1):
-        label = landing["name"]
-        safe_label = label.replace(chr(13), " ").replace(chr(10), " ").replace(chr(9), " ")[:80]
+        base_label = landing["name"]
+        base_label = base_label.replace(chr(13), " ").replace(chr(10), " ").replace(chr(9), " ")
+        base_label = base_label.strip()[:64] or f"VLESS-{idx:02d}"
+        label_counts[base_label] = label_counts.get(base_label, 0) + 1
+        suffix = label_counts[base_label]
+        safe_label = base_label if suffix == 1 else f"{base_label} [{suffix}]"
+        group_name = f"{safe_label}线路"
+        while group_name in used_group_names:
+            suffix += 1
+            safe_label = f"{base_label} [{suffix}]"
+            group_name = f"{safe_label}线路"
+        used_group_names.add(group_name)
         combo_names = []
         for front_node in front:
             combo_name = f"{safe_label}@{front_node['name']}"
