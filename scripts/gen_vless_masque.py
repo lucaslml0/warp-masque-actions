@@ -69,7 +69,7 @@ def parse_vless(uri, index):
         security = get("security", default="none").lower()
         network = get("type", "network", default="tcp").lower()
         label = urllib.parse.unquote(parts.fragment).strip() or f"VLESS-{index:02d}"
-        label = re.sub(r'[\\r\\n\\t]', ' ', label)[:80]
+        label = label.replace(chr(13), " ").replace(chr(10), " ").replace(chr(9), " ")[:80]
         node = {
             "name": label, "type": "vless", "server": host, "port": port,
             "uuid": uuid, "network": network, "udp": True,
@@ -155,7 +155,7 @@ def build(cfg, landings):
     groups_by_landing = {}
     for idx, landing in enumerate(landings, 1):
         label = landing["name"]
-        safe_label = re.sub(r'[\\r\\n\\t]', ' ', label)[:80]
+        label = label.replace(chr(13), " ").replace(chr(10), " ").replace(chr(9), " ")[:80]
         combo_names = []
         for front_node in front:
             combo_name = f"{safe_label}@{front_node['name']}"
